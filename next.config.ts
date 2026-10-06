@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      { source: '/api/platform/:path*', destination: `${process.env.BACKEND_URL}/api/platform/:path*` },
+    ];
+  },
 };
-
 export default nextConfig;
