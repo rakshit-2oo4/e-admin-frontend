@@ -1,6 +1,6 @@
 'use client';
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   UserPlus,
   Search,
@@ -10,15 +10,10 @@ import {
   Check,
   Shield,
   KeyRound,
-  UserX,
-  UserCheck,
-  Lock,
-  Sparkles,
-
   AlertTriangle,
   CheckCircle2,
   Copy,
-  Info,
+  RefreshCw,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 
@@ -32,75 +27,8 @@ export interface PlatformUserItem {
   role: PlatformRole;
   status: UserStatus;
   lastActive: string;
+  createdAt?: string;
 }
-
-// Default mock platform users exactly mirroring the Figma design
-const DEFAULT_USERS: PlatformUserItem[] = [
-  {
-    id: 'u-1',
-    name: 'Akshay Sharma',
-    email: 'akshay@ebenchcampus.com',
-    role: 'SUPER_ADMIN',
-    status: 'ACTIVE',
-    lastActive: '2026-10-05 12:31',
-  },
-  {
-    id: 'u-2',
-    name: 'Mira Chen',
-    email: 'mira@ebenchcampus.com',
-    role: 'SUPER_ADMIN',
-    status: 'ACTIVE',
-    lastActive: '2026-10-05 11:58',
-  },
-  {
-    id: 'u-3',
-    name: 'Luis Romero',
-    email: 'luis@ebenchcampus.com',
-    role: 'SUPPORT',
-    status: 'ACTIVE',
-    lastActive: '2026-10-05 10:42',
-  },
-  {
-    id: 'u-4',
-    name: 'Priya Nair',
-    email: 'priya@ebenchcampus.com',
-    role: 'SUPER_ADMIN',
-    status: 'ACTIVE',
-    lastActive: '2026-10-04 18:06',
-  },
-  {
-    id: 'u-5',
-    name: 'Noah Williams',
-    email: 'noah@ebenchcampus.com',
-    role: 'SUPER_ADMIN',
-    status: 'DISABLED',
-    lastActive: '2026-09-18 09:12',
-  },
-  {
-    id: 'u-6',
-    name: 'Sofia Laurent',
-    email: 'sofia@ebenchcampus.com',
-    role: 'SUPER_ADMIN',
-    status: 'ACTIVE',
-    lastActive: '2026-10-05 09:15',
-  },
-  {
-    id: 'u-7',
-    name: 'Marcus Vance',
-    email: 'marcus@ebenchcampus.com',
-    role: 'SUPPORT',
-    status: 'ACTIVE',
-    lastActive: '2026-10-02 14:20',
-  },
-  {
-    id: 'u-8',
-    name: 'Elena Rostova',
-    email: 'elena@ebenchcampus.com',
-    role: 'SUPPORT',
-    status: 'ACTIVE',
-    lastActive: '2026-09-29 17:05',
-  },
-];
 
 export default function PlatformUsersPage() {
   const queryClient = useQueryClient();
@@ -117,91 +45,11 @@ export default function PlatformUsersPage() {
   // Row context menu state
   const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
 
-  // Local users list (allows instant UI interaction)
-  const [usersList, setUsersList] = useState<PlatformUserItem[]>(DEFAULT_USERS);
-
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState<PlatformUserItem | null>(null);
   const [selectedUserForPasswordReset, setSelectedUserForPasswordReset] = useState<PlatformUserItem | null>(null);
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<PlatformUserItem | null>(null);
-
-  // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Close menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setOpenMenuUserId(null);
-      setRoleDropdownOpen(false);
-      setStatusDropdownOpen(false);
-    };
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  // Fetch real users from backend if available
-  const { data: serverUsers, refetch } = useQuery({
-    queryKey: ['platform-users-list'],
-    queryFn: async () => {
-      try {
-        return await api<{ items: any[]; total: number }>('/users?page=1&limit=50');
-      } catch {
-        return null;
-      }
-    },
-    retry: false,
-  });
-
-  // Sync server users if returned
-  useEffect(() => {
-    if (serverUsers?.items && serverUsers.items.length > 0) {
-      const mapped: PlatformUserItem[] = serverUsers.items.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role as PlatformRole,
-        status: u.isActive ? 'ACTIVE' : 'DISABLED',
-        lastActive: u.lastLoginAt
-          ? new Date(u.lastLoginAt).toISOString().replace('T', ' ').slice(0, 16)
-          : 'Never',
-      }));
-
-      // Combine with defaults ensuring seeded / demo items exist
-      const existingEmails = new Set(mapped.map((m) => m.email.toLowerCase()));
-      const combined = [...mapped];
-      for (const def of DEFAULT_USERS) {
-        if (!existingEmails.has(def.email.toLowerCase())) {
-          combined.push(def);
-        }
-      }
-      setUsersList(combined);
-    }
-  }, [serverUsers]);
-
-  // Filtered users calculation
-  const filteredUsers = useMemo(() => {
-    return usersList.filter((u) => {
-      // Search
-      const matchesSearch =
-        !searchQuery.trim() ||
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Role filter
-      const matchesRole = roleFilter === 'All' || u.role === roleFilter;
-
-      // Status filter
-      const matchesStatus = statusFilter === 'All' || u.status === statusFilter;
-
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [usersList, searchQuery, roleFilter, statusFilter]);
 
   // Form states for Create User
   const [createForm, setCreateForm] = useState({
@@ -218,9 +66,77 @@ export default function PlatformUsersPage() {
 
   // Password reset modal state
   const [newPasswordValue, setNewPasswordValue] = useState('');
-  const [resetSuccessNotice, setResetSuccessNotice] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
-  // Generate strong password
+  // Toast feedback
+  const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  const showToast = (msg: string, isError = false) => {
+    setToastMessage({ text: msg, isError });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenMenuUserId(null);
+      setRoleDropdownOpen(false);
+      setStatusDropdownOpen(false);
+    };
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Fetch real platform users strictly from backend database
+  const {
+    data: serverData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ['platform-users-list'],
+    queryFn: async () => {
+      return await api<{ items: any[]; total: number }>('/users', {
+        query: { page: 1, limit: 100 },
+      });
+    },
+    staleTime: 10_000,
+  });
+
+  // Map server items into PlatformUserItem objects (no fake mock data)
+  const usersList = useMemo<PlatformUserItem[]>(() => {
+    if (!serverData?.items) return [];
+    return serverData.items.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role as PlatformRole,
+      status: (u.isActive ? 'ACTIVE' : 'DISABLED') as UserStatus,
+      lastActive: u.lastLoginAt
+        ? new Date(u.lastLoginAt).toISOString().replace('T', ' ').slice(0, 16)
+        : 'Never',
+      createdAt: u.createdAt,
+    }));
+  }, [serverData]);
+
+  // Filtered users calculation
+  const filteredUsers = useMemo(() => {
+    return usersList.filter((u) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesRole = roleFilter === 'All' || u.role === roleFilter;
+      const matchesStatus = statusFilter === 'All' || u.status === statusFilter;
+
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [usersList, searchQuery, roleFilter, statusFilter]);
+
+  // Generate strong random password
   const generatePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
     let pass = '';
@@ -230,11 +146,11 @@ export default function PlatformUsersPage() {
     return pass;
   };
 
-  // Handle Create User
+  // Handle Create User directly via backend POST /api/platform/users
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (createForm.password.length < 12) {
-      alert('Password must be at least 12 characters.');
+      showToast('Password must be at least 12 characters.', true);
       return;
     }
     setCreateLoading(true);
@@ -242,34 +158,25 @@ export default function PlatformUsersPage() {
       await api('/users', {
         method: 'POST',
         body: {
-          name: createForm.name,
-          email: createForm.email,
+          name: createForm.name.trim(),
+          email: createForm.email.trim(),
           role: createForm.role,
           password: createForm.password,
         },
       });
-      showToast(`User ${createForm.name} created successfully`);
-      refetch();
-    } catch {
-      // Fallback local addition
-      const newUser: PlatformUserItem = {
-        id: `u-${Date.now()}`,
-        name: createForm.name,
-        email: createForm.email,
-        role: createForm.role,
-        status: 'ACTIVE',
-        lastActive: 'Just now',
-      };
-      setUsersList([newUser, ...usersList]);
-      showToast(`User ${createForm.name} added`);
-    } finally {
-      setCreateLoading(false);
+      showToast(`User ${createForm.name} created successfully in database`);
       setIsCreateModalOpen(false);
       setCreateForm({ name: '', email: '', role: 'SUPER_ADMIN', password: '' });
+      await queryClient.invalidateQueries({ queryKey: ['platform-users-list'] });
+    } catch (err: any) {
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to create user';
+      showToast(`Error: ${msg}`, true);
+    } finally {
+      setCreateLoading(false);
     }
   };
 
-  // Handle Edit Access
+  // Handle Edit Access via backend PATCH /api/platform/users/:id
   const handleSaveAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForEdit) return;
@@ -279,23 +186,18 @@ export default function PlatformUsersPage() {
         method: 'PATCH',
         body: { role: editRoleForm },
       });
-      showToast(`Updated access for ${selectedUserForEdit.name}`);
-      refetch();
-    } catch {
-      // Local fallback update
-      setUsersList(
-        usersList.map((u) =>
-          u.id === selectedUserForEdit.id ? { ...u, role: editRoleForm } : u,
-        ),
-      );
-      showToast(`Access role updated for ${selectedUserForEdit.name}`);
+      showToast(`Updated access role for ${selectedUserForEdit.name}`);
+      setSelectedUserForEdit(null);
+      await queryClient.invalidateQueries({ queryKey: ['platform-users-list'] });
+    } catch (err: any) {
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to update access';
+      showToast(`Error: ${msg}`, true);
     } finally {
       setEditLoading(false);
-      setSelectedUserForEdit(null);
     }
   };
 
-  // Handle Toggle Disable/Enable
+  // Handle Toggle Disable/Enable via backend PATCH /api/platform/users/:id
   const handleToggleUserStatus = async (user: PlatformUserItem) => {
     const newStatus: UserStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
     try {
@@ -304,24 +206,54 @@ export default function PlatformUsersPage() {
         body: { isActive: newStatus === 'ACTIVE' },
       });
       showToast(newStatus === 'DISABLED' ? `Disabled ${user.name}` : `Re-enabled ${user.name}`);
-      refetch();
-    } catch {
-      // Local fallback
-      setUsersList(
-        usersList.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u)),
-      );
-      showToast(newStatus === 'DISABLED' ? `Disabled ${user.name}` : `Re-enabled ${user.name}`);
+      await queryClient.invalidateQueries({ queryKey: ['platform-users-list'] });
+    } catch (err: any) {
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to update status';
+      showToast(`Error: ${msg}`, true);
     }
     setOpenMenuUserId(null);
+  };
+
+  // Handle Password Reset via backend POST /api/platform/users/:id/reset-password
+  const handleApplyPasswordReset = async () => {
+    if (!selectedUserForPasswordReset) return;
+    if (newPasswordValue.length < 12) {
+      showToast('Password must be at least 12 characters.', true);
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await api(`/users/${selectedUserForPasswordReset.id}/reset-password`, {
+        method: 'POST',
+        body: { newPassword: newPasswordValue },
+      });
+      showToast(`Password reset successfully for ${selectedUserForPasswordReset.name}`);
+      setSelectedUserForPasswordReset(null);
+      await queryClient.invalidateQueries({ queryKey: ['platform-users-list'] });
+    } catch (err: any) {
+      const msg = err instanceof ApiError ? err.message : err?.message || 'Failed to reset password';
+      showToast(`Error: ${msg}`, true);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#101826] border border-[#23334D] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-mono animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-          <span>{toastMessage}</span>
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-2xl text-xs font-mono animate-in fade-in slide-in-from-bottom-2 duration-200 border ${toastMessage.isError
+            ? 'bg-[#1C1215] border-[#EF4444]/60 text-[#EF4444]'
+            : 'bg-[#101826] border-[#10B981]/50 text-white'
+            }`}
+        >
+          {toastMessage.isError ? (
+            <AlertTriangle className="w-4 h-4 text-[#EF4444] shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
@@ -331,8 +263,13 @@ export default function PlatformUsersPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">
             Platform users
           </h1>
-          <p className="text-xs text-slate-400 font-normal mt-1.5">
-            {usersList.length} people with access
+          <p className="text-xs text-slate-400 font-normal mt-1.5 flex items-center gap-2">
+            <span>
+              {isLoading ? 'Loading users from database...' : `${usersList.length} people with access`}
+            </span>
+            {isFetching && !isLoading && (
+              <RefreshCw className="w-3 h-3 text-slate-500 animate-spin" />
+            )}
           </p>
         </div>
 
@@ -378,8 +315,19 @@ export default function PlatformUsersPage() {
           )}
         </div>
 
-        {/* Right dropdown filters */}
+        {/* Right dropdown filters & Refresh */}
         <div className="flex items-center gap-2">
+          {/* Refresh button */}
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="bg-[#0B101B] border border-[#1A2333] hover:bg-[#131B2A] text-slate-400 hover:text-white p-2 rounded-lg transition-colors cursor-pointer"
+            title="Refresh list"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          </button>
+
           {/* Role Filter Dropdown */}
           <div className="relative">
             <button
@@ -454,6 +402,26 @@ export default function PlatformUsersPage() {
         </div>
       </div>
 
+      {/* ERROR BANNER */}
+      {isError && (
+        <div className="p-4 bg-[#1C1215] border border-[#EF4444]/40 rounded-xl flex items-center justify-between text-xs text-[#EF4444]">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>
+              Failed to load platform users from database:{' '}
+              {error instanceof Error ? error.message : 'Unknown error'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="px-3 py-1 bg-[#EF4444]/20 hover:bg-[#EF4444]/30 rounded font-medium text-white transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* MAIN PLATFORM USERS TABLE */}
       <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -471,10 +439,34 @@ export default function PlatformUsersPage() {
 
             {/* Table Body */}
             <tbody className="divide-y divide-[#131A2B] text-xs">
-              {filteredUsers.length === 0 ? (
+              {isLoading ? (
+                // SKELETON ROWS
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <tr key={`skel-${idx}`} className="animate-pulse">
+                    <td className="py-4 px-5">
+                      <div className="h-4 bg-[#141C2B] rounded w-36 mb-1.5" />
+                      <div className="h-3 bg-[#101724] rounded w-48" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="h-5 bg-[#141C2B] rounded w-24" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="h-5 bg-[#141C2B] rounded w-16" />
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="h-3 bg-[#101724] rounded w-28" />
+                    </td>
+                    <td className="py-4 px-5 text-right">
+                      <div className="h-7 w-7 bg-[#141C2B] rounded inline-block" />
+                    </td>
+                  </tr>
+                ))
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-500 font-sans">
-                    No platform users matching your filters.
+                    {searchQuery || roleFilter !== 'All' || statusFilter !== 'All'
+                      ? 'No platform users matching your filters.'
+                      : 'No platform users found in database.'}
                   </td>
                 </tr>
               ) : (
@@ -548,7 +540,7 @@ export default function PlatformUsersPage() {
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
 
-                        {/* Action Dropdown Menu matching screenshot */}
+                        {/* Action Dropdown Menu matching console design */}
                         {isMenuOpen && (
                           <div
                             className="absolute right-5 mt-1 w-44 bg-[#0B101B] border border-[#222E42] rounded-lg shadow-2xl py-1 z-40 text-left text-xs font-sans animate-in fade-in zoom-in-95 duration-100"
@@ -561,7 +553,7 @@ export default function PlatformUsersPage() {
                                 setEditRoleForm(user.role);
                                 setOpenMenuUserId(null);
                               }}
-                              className="w-full text-left px-3.5 py-2 text-slate-200 hover:bg-[#131B2A] hover:text-white flex items-center gap-2"
+                              className="w-full text-left px-3.5 py-2 text-slate-200 hover:bg-[#131B2A] hover:text-white flex items-center gap-2 cursor-pointer"
                             >
                               <span>Edit access</span>
                             </button>
@@ -570,10 +562,9 @@ export default function PlatformUsersPage() {
                               onClick={() => {
                                 setSelectedUserForPasswordReset(user);
                                 setNewPasswordValue(generatePassword());
-                                setResetSuccessNotice(false);
                                 setOpenMenuUserId(null);
                               }}
-                              className="w-full text-left px-3.5 py-2 text-slate-200 hover:bg-[#131B2A] hover:text-white flex items-center gap-2"
+                              className="w-full text-left px-3.5 py-2 text-slate-200 hover:bg-[#131B2A] hover:text-white flex items-center gap-2 cursor-pointer"
                             >
                               <span>Reset password</span>
                             </button>
@@ -581,7 +572,7 @@ export default function PlatformUsersPage() {
                             <button
                               type="button"
                               onClick={() => handleToggleUserStatus(user)}
-                              className={`w-full text-left px-3.5 py-2 flex items-center gap-2 ${user.status === 'ACTIVE'
+                              className={`w-full text-left px-3.5 py-2 flex items-center gap-2 cursor-pointer ${user.status === 'ACTIVE'
                                 ? 'text-[#EF4444] hover:bg-[#1C1417]'
                                 : 'text-[#10B981] hover:bg-[#0D1C17]'
                                 }`}
@@ -619,7 +610,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -672,7 +663,7 @@ export default function PlatformUsersPage() {
                     onClick={() =>
                       setCreateForm({ ...createForm, password: generatePassword() })
                     }
-                    className="text-[#F59E0B] hover:underline font-mono text-[11px]"
+                    className="text-[#F59E0B] hover:underline font-mono text-[11px] cursor-pointer"
                   >
                     Generate secure
                   </button>
@@ -691,16 +682,16 @@ export default function PlatformUsersPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white"
+                  className="px-4 py-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
-                  {createLoading ? 'Creating…' : 'Create User'}
+                  {createLoading ? 'Creating in DB…' : 'Create User'}
                 </button>
               </div>
             </form>
@@ -722,7 +713,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForEdit(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -782,16 +773,16 @@ export default function PlatformUsersPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedUserForEdit(null)}
-                  className="px-4 py-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white"
+                  className="px-4 py-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
-                  {editLoading ? 'Saving…' : 'Save Changes'}
+                  {editLoading ? 'Saving in DB…' : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -813,23 +804,25 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForPasswordReset(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Generate a temporary password for <span className="text-white font-semibold">{selectedUserForPasswordReset.name}</span> ({selectedUserForPasswordReset.email}). They will be required to change it on next login.
+              Generate a new password for{' '}
+              <span className="text-white font-semibold">{selectedUserForPasswordReset.name}</span> (
+              {selectedUserForPasswordReset.email}). This will immediately update the database and invalidate active sessions.
             </p>
 
             <div>
               <div className="flex items-center justify-between mb-1 text-xs">
-                <label className="text-slate-300 font-medium">Temporary Password</label>
+                <label className="text-slate-300 font-medium">New Password</label>
                 <button
                   type="button"
                   onClick={() => setNewPasswordValue(generatePassword())}
-                  className="text-[#F59E0B] hover:underline font-mono text-[11px]"
+                  className="text-[#F59E0B] hover:underline font-mono text-[11px] cursor-pointer"
                 >
                   Regenerate
                 </button>
@@ -847,7 +840,7 @@ export default function PlatformUsersPage() {
                     navigator.clipboard.writeText(newPasswordValue);
                     showToast('Copied password to clipboard');
                   }}
-                  className="p-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white"
+                  className="p-2 bg-[#0E1523] border border-[#23334D] rounded-lg text-slate-300 hover:text-white cursor-pointer"
                   title="Copy password"
                 >
                   <Copy className="w-4 h-4" />
@@ -859,19 +852,17 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForPasswordReset(null)}
-                className="px-4 py-2 bg-[#0E1523] border border-[#23334D] text-xs text-slate-300 hover:text-white rounded-lg"
+                className="px-4 py-2 bg-[#0E1523] border border-[#23334D] text-xs text-slate-300 hover:text-white rounded-lg cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  showToast(`Password reset for ${selectedUserForPasswordReset.name}`);
-                  setSelectedUserForPasswordReset(null);
-                }}
-                className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-xs font-semibold text-black rounded-lg transition-colors cursor-pointer"
+                disabled={resetLoading}
+                onClick={handleApplyPasswordReset}
+                className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-xs font-semibold text-black rounded-lg transition-colors cursor-pointer disabled:opacity-60"
               >
-                Apply Reset
+                {resetLoading ? 'Updating DB…' : 'Apply Reset'}
               </button>
             </div>
           </div>
@@ -901,7 +892,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForDetail(null)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -909,11 +900,31 @@ export default function PlatformUsersPage() {
 
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
+                <span className="text-slate-400">User ID</span>
+                <span className="font-mono text-[11px] text-slate-300 flex items-center gap-2">
+                  <span>{selectedUserForDetail.id}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedUserForDetail.id);
+                      showToast('Copied ID to clipboard');
+                    }}
+                    className="text-slate-500 hover:text-slate-300 cursor-pointer"
+                    title="Copy ID"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
                 <span className="text-slate-400">Status</span>
-                <span className={`font-mono px-2 py-0.5 rounded text-[11px] font-semibold ${selectedUserForDetail.status === 'ACTIVE'
-                  ? 'text-[#10B981] bg-[#064E3B]/40 border border-[#065F46]'
-                  : 'text-[#EF4444] bg-[#7F1D1D]/40 border border-[#991B1B]'
-                  }`}>
+                <span
+                  className={`font-mono px-2 py-0.5 rounded text-[11px] font-semibold ${selectedUserForDetail.status === 'ACTIVE'
+                    ? 'text-[#10B981] bg-[#064E3B]/40 border border-[#065F46]'
+                    : 'text-[#EF4444] bg-[#7F1D1D]/40 border border-[#991B1B]'
+                    }`}
+                >
                   {selectedUserForDetail.status}
                 </span>
               </div>
@@ -932,6 +943,15 @@ export default function PlatformUsersPage() {
                 </span>
               </div>
 
+              {selectedUserForDetail.createdAt && (
+                <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
+                  <span className="text-slate-400">Account Created</span>
+                  <span className="font-mono text-slate-400">
+                    {new Date(selectedUserForDetail.createdAt).toISOString().replace('T', ' ').slice(0, 16)}
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
                 <span className="text-slate-400">MFA / 2FA Status</span>
                 <span className="font-mono text-[#10B981]">
@@ -949,14 +969,14 @@ export default function PlatformUsersPage() {
                   setSelectedUserForEdit(u);
                   setEditRoleForm(u.role);
                 }}
-                className="px-4 py-2 bg-[#0E1523] border border-[#23334D] text-xs text-slate-300 hover:text-white rounded-lg"
+                className="px-4 py-2 bg-[#0E1523] border border-[#23334D] text-xs text-slate-300 hover:text-white rounded-lg cursor-pointer"
               >
                 Edit Access
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedUserForDetail(null)}
-                className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-xs font-semibold text-black rounded-lg"
+                className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-xs font-semibold text-black rounded-lg cursor-pointer"
               >
                 Close
               </button>
