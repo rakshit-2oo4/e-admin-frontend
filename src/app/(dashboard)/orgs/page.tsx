@@ -1,17 +1,14 @@
 'use client';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   ChevronDown,
-  Download,
-  Plus,
   MoreHorizontal,
   SearchX,
   X,
   Check,
-  AlertTriangle,
   UserCheck,
   Trash2,
   PauseCircle,
@@ -89,7 +86,7 @@ export default function OrganizationsPage() {
         };
         if (searchTerm.trim()) queryParams.search = searchTerm.trim();
         if (planFilter !== 'All') queryParams.plan = planFilter.toLowerCase();
-        if (statusFilter !== 'All') queryParams.status = statusFilter.toLowerCase();
+        queryParams.status = statusFilter.toLowerCase();
 
         const res = await api<{
           items: any[];
@@ -142,6 +139,32 @@ export default function OrganizationsPage() {
   const totalCount = apiData?.counts?.total ?? apiData?.total ?? items.length;
   const suspendedCount = apiData?.counts?.suspended ?? items.filter((i) => i.status === 'Suspended').length;
   const deletedCount = apiData?.counts?.deleted ?? items.filter((i) => i.status === 'Deleted').length;
+
+  const filteredTotal = apiData?.total ?? items.length;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / rowsPerPage));
+  const rangeStart = items.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const rangeEnd = (currentPage - 1) * rowsPerPage + items.length;
+
+  const pageNumbers: (number | '…')[] = [];
+  if (totalPages <= 5) {
+    for (let p = 1; p <= totalPages; p++) pageNumbers.push(p);
+  } else {
+    pageNumbers.push(1);
+    if (currentPage > 3) pageNumbers.push('…');
+    for (let p = Math.max(2, currentPage - 1); p <= Math.min(totalPages - 1, currentPage + 1); p++) pageNumbers.push(p);
+    if (currentPage < totalPages - 2) pageNumbers.push('…');
+    pageNumbers.push(totalPages);
+  }
+
+  // Reset to page 1 when filters / page size change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, planFilter, statusFilter, rowsPerPage]);
+
+  // Clear selection when the page changes
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [currentPage]);
 
   // Active filter count
   const activeFiltersCount =
@@ -707,7 +730,7 @@ export default function OrganizationsPage() {
         {/* 5. Pagination Footer (Image 4) */}
         <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3.5 border-t border-[#141C2E] bg-[#090D16] text-xs font-mono text-[#8B98A9]">
           <div>
-            Showing {items.length === 0 ? 0 : 1}-{Math.min(rowsPerPage, items.length)} of {totalCount}
+            Showing {rangeStart}-{rangeEnd} of {filteredTotal}
           </div>
 
           <div className="flex items-center gap-3">
@@ -730,28 +753,41 @@ export default function OrganizationsPage() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className="w-7 h-7 rounded bg-[#F59E0B] text-black font-mono font-bold text-xs flex items-center justify-center shadow-sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
+                className="px-2 h-7 rounded border border-[#1A2338] text-slate-400 text-xs hover:text-white hover:bg-[#121927] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                1
+                Prev
               </button>
+
+              {pageNumbers.map((p, idx) =>
+                p === '…' ? (
+                  <span key={`gap-${idx}`} className="px-1 text-[#64748B]">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCurrentPage(p)}
+                    aria-current={p === currentPage ? 'page' : undefined}
+                    className={`w-7 h-7 rounded text-xs flex items-center justify-center transition-colors ${p === currentPage
+                      ? 'bg-[#F59E0B] text-black font-mono font-bold shadow-sm'
+                      : 'border border-[#1A2338] text-slate-400 hover:text-white hover:bg-[#121927]'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
               <button
                 type="button"
-                className="w-7 h-7 rounded border border-[#1A2338] text-slate-400 text-xs flex items-center justify-center hover:text-white hover:bg-[#121927] transition-colors"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="Next page"
+                className="px-2 h-7 rounded border border-[#1A2338] text-slate-400 text-xs hover:text-white hover:bg-[#121927] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                2
-              </button>
-              <button
-                type="button"
-                className="w-7 h-7 rounded border border-[#1A2338] text-slate-400 text-xs flex items-center justify-center hover:text-white hover:bg-[#121927] transition-colors"
-              >
-                3
-              </button>
-              <span className="px-1 text-[#64748B]">..</span>
-              <button
-                type="button"
-                className="w-7 h-7 rounded border border-[#1A2338] text-slate-400 text-xs flex items-center justify-center hover:text-white hover:bg-[#121927] transition-colors"
-              >
-                5
+                Next
               </button>
             </div>
           </div>

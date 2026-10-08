@@ -10,7 +10,6 @@ interface NavbarProps {
 export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
   const pathname = usePathname();
 
-  // Determine section breadcrumb from path or prop
   const getBreadcrumb = () => {
     if (currentSection) return currentSection.toUpperCase();
     if (pathname === '/dashboard' || pathname === '/' || pathname === '') return 'OVERVIEW';
@@ -24,11 +23,8 @@ export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
 
   return (
     <header className="h-14 w-full bg-[#080C14] border-b border-[#1A2234] flex items-center justify-between px-4 sticky top-0 z-40 select-none">
-      {/* Left: Brand + Breadcrumb */}
       <div className="flex items-center h-full">
-        {/* Brand Block */}
         <div className="flex items-center gap-3 pr-6 border-r border-[#1A2234] h-full">
-          {/* EC Orange Logo Box */}
           <div className="w-8 h-8 rounded-md bg-[#F59E0B] flex items-center justify-center font-bold text-black text-sm tracking-tight shadow-sm">
             EC
           </div>
@@ -42,7 +38,6 @@ export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
           </div>
         </div>
 
-        {/* Monospace Path Breadcrumb */}
         <div className="pl-6 flex items-center gap-2 text-xs font-mono tracking-widest text-[#8F9CAE]">
           <span className="text-[#64748B]">PLATFORM</span>
           <span className="text-[#3B4861]">/</span>

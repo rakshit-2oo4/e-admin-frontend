@@ -12,7 +12,6 @@ export function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close user dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -32,7 +31,6 @@ export function Sidebar() {
     { href: '/settings', label: 'Settings' },
   ];
 
-  // Helper for user initials
   const getInitials = (name?: string, email?: string) => {
     if (name) {
       const parts = name.trim().split(/\s+/);
