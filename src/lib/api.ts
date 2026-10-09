@@ -55,3 +55,49 @@ export async function api<T>(path: string, { method = 'GET', body, query }: Opts
     }
     return json.data as T;
 }
+
+export async function downloadFile(
+    path: string,
+    { query, defaultFilename = 'export.csv' }: { query?: Record<string, string | number | undefined>; defaultFilename?: string } = {}
+): Promise<void> {
+    const qs = query
+        ? '?' + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])).toString()
+        : '';
+    const call = () =>
+        fetch(`/api/platform${path}${qs}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            },
+        });
+
+    let res = await call();
+    if (res.status === 401 && (await refreshAccessToken())) {
+        res = await call();
+    }
+
+    if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new ApiError(res.status, json?.error?.code ?? 'UNKNOWN', json?.error?.message ?? res.statusText);
+    }
+
+    const disposition = res.headers.get('Content-Disposition');
+    let filename = defaultFilename;
+    if (disposition) {
+        const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (match && match[1]) {
+            filename = match[1].replace(/['"]/g, '').trim();
+        }
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

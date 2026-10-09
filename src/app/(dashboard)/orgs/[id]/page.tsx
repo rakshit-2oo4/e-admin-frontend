@@ -14,23 +14,12 @@ import {
   ExternalLink,
   ShieldAlert,
   X,
-  User,
-  Users,
-  CreditCard,
-  BarChart3,
   FileText,
-  Clock,
-  Sparkles,
   Lock,
-  Search,
   CheckCircle2,
-  Calendar,
-  Layers,
-  ChevronDown,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 
-// Sparkline SVG helper component
 function Sparkline({
   path,
   color = '#F59E0B',
@@ -443,7 +432,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
-      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#101826] border border-[#23334D] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-mono animate-in fade-in slide-in-from-bottom-2 duration-200">
           <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
@@ -451,84 +439,75 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* TOP HEADER SECTION */}
       <div className="space-y-3">
-        {/* Breadcrumb matching design: Organizations / Acme Corp */}
-        <div className="flex items-center gap-2 text-xs font-sans tracking-normal">
+        <div className="flex items-center gap-2 text-[11px] font-sans tracking-normal">
           <Link
             href="/orgs"
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-[#626C79] hover:text-white transition-colors"
           >
             Organizations
           </Link>
           <span className="text-slate-600 font-mono">/</span>
-          <span className="text-slate-300 font-medium">{org.name}</span>
+          <span className="text-[#929CAB] font-medium">{org.name}</span>
         </div>
 
-        {/* Title, Status Badge, and Primary Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
-          {/* Left: Organization Name, ACTIVE badge, and Slug */}
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">
+              <h1 className="text-[24px] sm:text-3xl font-bold text-[#F2F4F7] tracking-tight leading-none">
                 {org.name}
               </h1>
 
               {/* Status Pill Badge */}
               {org.status === 'Active' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wider bg-[#064E3B]/60 text-[#10B981] border border-[#065F46] uppercase leading-none">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-mono font-medium tracking-wider bg-[#064E3B]/60 text-[#10B981] border border-[#065F46] uppercase leading-none">
                   ACTIVE
                 </span>
               )}
               {org.status === 'Suspended' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wider bg-[#78350F]/40 text-[#F59E0B] border border-[#B45309] uppercase leading-none">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-mono font-medium tracking-wider bg-[#78350F]/40 text-[#F59E0B] border border-[#B45309] uppercase leading-none">
                   SUSPENDED
                 </span>
               )}
               {org.status === 'Deleted' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wider bg-[#7F1D1D]/40 text-[#EF4444] border border-[#991B1B] uppercase leading-none">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-mono font-medium tracking-wider bg-[#7F1D1D]/40 text-[#EF4444] border border-[#991B1B] uppercase leading-none">
                   DELETED
                 </span>
               )}
             </div>
 
-            {/* Slug */}
-            <span className="text-xs font-mono text-slate-500 tracking-wide mt-1.5 block">
+            <span className="text-[11px] font-mono text-[#626C79] tracking-wide mt-1.5 block">
               {org.slug}
             </span>
           </div>
 
-          {/* Right Action Buttons */}
           <div className="flex items-center gap-2 relative">
-            {/* Edit organization Button */}
             <button
               type="button"
               onClick={() => setIsEditModalOpen(true)}
-              className="bg-[#0B101B] border border-[#222E42] hover:bg-[#131B2A] text-slate-200 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+              className="bg-[#151920] border border-[#3A4350] hover:bg-[#131B2A] text-[#F2F4F7] text-[12px] font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Pencil className="w-3.5 h-3.5 text-slate-400" />
+              <Pencil className="w-3.5 h-3.5 text-[#F2F4F7]" />
               <span>Edit organization</span>
             </button>
 
-            {/* Impersonate Button (Figma amber accent) */}
             <button
               type="button"
               onClick={() => setIsImpersonateModalOpen(true)}
-              className="bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold text-xs px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+              className="bg-[#F59E0B] hover:bg-[#D97706] text-[#07090D] font-semibold text-[12px] px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
             >
-              <Eye className="w-4 h-4 text-black stroke-[2.2]" />
+              <Eye className="w-4 h-4 text-[#07090D] stroke-[2.2]" />
               <span>Impersonate</span>
             </button>
 
-            {/* More Options (...) Button */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className="bg-[#0B101B] border border-[#222E42] hover:bg-[#131B2A] text-slate-300 hover:text-white p-2 rounded-lg transition-colors cursor-pointer"
+                className="bg-[#151920] border border-[#3A4350] hover:bg-[#131B2A] text-[#F2F4F7] text-[12px] font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
                 title="More actions"
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-4 h-4 text-[#F2F4F7]" />
               </button>
 
               {/* Dropdown Menu */}
@@ -546,7 +525,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                     }}
                     className="w-full text-left px-3 py-2 text-slate-300 hover:bg-[#131B2A] hover:text-white flex items-center gap-2"
                   >
-                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                    <Copy className="w-3.5 h-3.5 text-[#626C79]" />
                     <span>Copy Org ID</span>
                   </button>
                   <button
@@ -558,7 +537,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                     }}
                     className="w-full text-left px-3 py-2 text-slate-300 hover:bg-[#131B2A] hover:text-white flex items-center gap-2"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                    <ExternalLink className="w-3.5 h-3.5 text-[#626C79]" />
                     <span>Open Domain</span>
                   </button>
                   <button
@@ -569,7 +548,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                     }}
                     className="w-full text-left px-3 py-2 text-slate-300 hover:bg-[#131B2A] hover:text-white flex items-center gap-2"
                   >
-                    <FileText className="w-3.5 h-3.5 text-slate-400" />
+                    <FileText className="w-3.5 h-3.5 text-[#626C79]" />
                     <span>View Audit Records</span>
                   </button>
                   <div className="border-t border-[#1F2B3E] my-1" />
@@ -601,61 +580,55 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        {/* TABS ROW */}
         <div className="border-b border-[#1A2333] pt-4">
           <nav className="flex items-center gap-8 -mb-px overflow-x-auto text-sm font-medium">
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className={`pb-3.5 transition-colors cursor-pointer ${
-                activeTab === 'overview'
-                  ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-3.5 transition-colors cursor-pointer ${activeTab === 'overview'
+                ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
+                : 'text-[#626C79] hover:text-slate-200'
+                }`}
             >
               Overview
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('people')}
-              className={`pb-3.5 transition-colors cursor-pointer ${
-                activeTab === 'people'
-                  ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-3.5 transition-colors cursor-pointer ${activeTab === 'people'
+                ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
+                : 'text-[#626C79] hover:text-slate-200'
+                }`}
             >
               People
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('subscriptions')}
-              className={`pb-3.5 transition-colors cursor-pointer ${
-                activeTab === 'subscriptions'
-                  ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-3.5 transition-colors cursor-pointer ${activeTab === 'subscriptions'
+                ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
+                : 'text-[#626C79] hover:text-slate-200'
+                }`}
             >
               Subscriptions
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('usage')}
-              className={`pb-3.5 transition-colors cursor-pointer ${
-                activeTab === 'usage'
-                  ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-3.5 transition-colors cursor-pointer ${activeTab === 'usage'
+                ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
+                : 'text-[#626C79] hover:text-slate-200'
+                }`}
             >
               Usage
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('audit')}
-              className={`pb-3.5 transition-colors cursor-pointer ${
-                activeTab === 'audit'
-                  ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`pb-3.5 transition-colors cursor-pointer ${activeTab === 'audit'
+                ? 'text-[#F59E0B] border-b-2 border-[#F59E0B]'
+                : 'text-[#626C79] hover:text-slate-200'
+                }`}
             >
               Audit log
             </button>
@@ -663,141 +636,121 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* TAB 1: OVERVIEW (EXACT PIXEL-PERFECT REPLICA OF FIGMA) */}
-      {/* ======================================================== */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT COLUMN: Summary & Recent Activity (Span 8) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* CARD 1: SUMMARY */}
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6">
-              {/* Card Header: Title on Left, Org Code on Right */}
               <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
-                <h2 className="text-sm font-semibold text-white tracking-wide">
+                <h2 className="text-[14px] font-semibold text-[#F2F4F7] tracking-wide">
                   Summary
                 </h2>
-                <span className="font-mono text-xs text-slate-500 tracking-wider">
+                <span className="font-mono text-[10px] text-[#626C79] tracking-wider">
                   {org.orgCode}
                 </span>
               </div>
 
-              {/* Key-Value Rows */}
-              <div className="divide-y divide-[#131A2B] text-xs">
-                {/* Created */}
+              <div className="divide-y divide-[#131A2B] text-[12px]">
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Created
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-slate-200 font-semibold">
+                    <span className="font-mono text-[#F2F4F7] text-[13px] font-medium">
                       {org.createdDate}
                     </span>
-                    <span className="text-slate-500 font-normal">
+                    <span className="text-[#626C79] font-normal">
                       {org.createdAgo}
                     </span>
                   </div>
                 </div>
 
-                {/* Created by */}
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Created by
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-200 font-medium">
+                    <span className="text-[#F2F4F7] font-medium text-[13px]">
                       {org.createdBy}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono bg-[#131B2A] border border-[#222E42] px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] text-[#626C79] font-mono bg-[#131B2A] border border-[#222E42] px-1.5 py-0.5 rounded">
                       {org.createdByType}
                     </span>
                   </div>
                 </div>
 
-                {/* Plan */}
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Plan
                   </span>
-                  <span className="text-slate-200 font-medium">
+                  <span className="text-[#F2F4F7] font-medium text-[13px]">
                     {org.plan}
                   </span>
                 </div>
 
-                {/* Trial length */}
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Trial length
                   </span>
-                  <span className="font-mono text-slate-200 font-medium">
+                  <span className="font-mono text-[#F2F4F7] font-medium text-[13px]">
                     {org.trialLength}
                   </span>
                 </div>
 
-                {/* Primary domain */}
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Primary domain
                   </span>
-                  <span className="font-mono text-slate-300">
+                  <span className="font-mono text-[#F2F4F7] text-[13px]">
                     {org.primaryDomain}
                   </span>
                 </div>
 
-                {/* Primary contact */}
                 <div className="py-3.5 flex items-center">
-                  <span className="text-slate-400 w-44 flex-shrink-0 font-medium">
+                  <span className="text-[#626C79] w-44 flex-shrink-0 font-medium">
                     Primary contact
                   </span>
-                  <span className="text-slate-300">
+                  <span className="text-[#F2F4F7] text-[13px]">
                     {org.primaryContact} · {org.contactEmail}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* CARD 2: RECENT ACTIVITY */}
-            <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6">
-              {/* Header */}
+            <div className="bg-[#07090D] border border-[#1A2333] rounded-xl p-6">
               <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
-                <h2 className="text-sm font-semibold text-white tracking-wide">
+                <h2 className="text-[14px] font-medium text-[#F2F4F7] tracking-wide">
                   Recent activity
                 </h2>
                 <button
                   type="button"
                   onClick={() => setActiveTab('audit')}
-                  className="text-xs text-[#F59E0B] hover:text-[#FBBF24] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                  className="text-[11px] text-[#F59E0B] hover:text-[#FBBF24] font-medium flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <span>View audit log</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Activity List */}
               <div className="divide-y divide-[#131A2B]">
                 {org.recentActivity.map((act) => (
                   <div key={act.id} className="py-3.5 flex items-center justify-between">
-                    {/* Left: Stripe Indicator + Title + Subtitle */}
                     <div className="flex items-start gap-3">
-                      {/* Left vertical stripe (Amber on #2, Slate on others) */}
                       <span
-                        className={`w-1 h-9 rounded-full flex-shrink-0 mt-0.5 ${
-                          act.stripeColor === 'amber' ? 'bg-[#F59E0B]' : 'bg-[#334155]'
-                        }`}
+                        className={`w-1 h-9 rounded-full flex-shrink-0 mt-0.5 ${act.stripeColor === 'amber' ? 'bg-[#F59E0B]' : 'bg-[#334155]'
+                          }`}
                       />
                       <div>
-                        <div className="text-xs font-medium text-slate-200">
+                        <div className="text-[12px] font-medium text-[#F2F4F7]">
                           {act.title}
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-[#626C79] mt-0.5">
                           {act.actor}
                           {act.actorType && ` · ${act.actorType}`}
                         </div>
                       </div>
                     </div>
 
-                    {/* Right: Timestamp */}
-                    <div className="text-xs font-mono text-slate-500 flex-shrink-0 pl-4">
+                    <div className="text-[10px] font-mono text-[#626C79] flex-shrink-0 pl-4">
                       {act.timestamp}
                     </div>
                   </div>
@@ -806,33 +759,28 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Usage & Danger Zone (Span 4) */}
           <div className="lg:col-span-4 space-y-6">
-            {/* CARD 1: USAGE */}
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6">
-              {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
-                <h2 className="text-sm font-semibold text-white tracking-wide">
+                <h2 className="text-[14px] font-medium text-[#F2F4F7] tracking-wide">
                   Usage
                 </h2>
-                <span className="font-mono text-[11px] tracking-wider text-slate-500 uppercase">
+                <span className="font-mono text-[10px] tracking-wider text-[#626C79] uppercase">
                   OCT 2026
                 </span>
               </div>
 
-              {/* Metrics Rows */}
               <div className="divide-y divide-[#131A2B]">
-                {/* Metric 1: Candidate attempts */}
                 <div className="py-4 flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">
+                    <div className="text-[11px] text-[#626C79] mb-1">
                       Candidate attempts
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-xl font-bold font-mono text-white">
+                      <span className="text-[16px] font-medium font-mono text-[#F2F4F7]">
                         {org.candidateAttempts.toLocaleString()}
                       </span>
-                      <span className="text-xs text-slate-500 ml-2">
+                      <span className="text-[10px] text-[#626C79] ml-2">
                         64% of {org.attemptsLimit.toLocaleString()}
                       </span>
                     </div>
@@ -840,17 +788,16 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                   <Sparkline path={SPARKLINES.attempts} color="#F59E0B" />
                 </div>
 
-                {/* Metric 2: Active seats */}
                 <div className="py-4 flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">
+                    <div className="text-[11px] text-[#626C79] mb-1">
                       Active seats
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-xl font-bold font-mono text-white">
+                      <span className="text-[16px] font-medium font-mono text-[#F2F4F7]">
                         {org.activeSeats}
                       </span>
-                      <span className="text-xs text-slate-500 ml-2">
+                      <span className="text-[10px] text-[#626C79] ml-2">
                         of {org.seatsLimit}
                       </span>
                     </div>
@@ -858,17 +805,16 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                   <Sparkline path={SPARKLINES.seats} color="#F59E0B" />
                 </div>
 
-                {/* Metric 3: Storage (RED HIGHLIGHT AS PER FIGMA) */}
                 <div className="py-4 flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">
+                    <div className="text-[11px] text-[#626C79] mb-1">
                       Storage
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-xl font-bold font-mono text-[#EF4444]">
+                      <span className="text-[16px] font-bold font-mono text-[#DC2626]">
                         {org.storageGB} GB
                       </span>
-                      <span className="text-xs text-slate-500 ml-2">
+                      <span className="text-[10px] text-[#626C79] ml-2">
                         84% used
                       </span>
                     </div>
@@ -876,17 +822,16 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                   <Sparkline path={SPARKLINES.storage} color="#EF4444" />
                 </div>
 
-                {/* Metric 4: API requests */}
                 <div className="py-4 flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">
+                    <div className="text-[11px] text-[#626C79] mb-1">
                       API requests
                     </div>
                     <div className="flex items-baseline">
-                      <span className="text-xl font-bold font-mono text-white">
+                      <span className="text-[16px] font-bold font-mono text-white">
                         {org.apiRequests}
                       </span>
-                      <span className="text-xs text-slate-500 ml-2">
+                      <span className="text-[10px] text-[#626C79] ml-2">
                         {org.apiGrowth}
                       </span>
                     </div>
@@ -896,56 +841,50 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
 
-            {/* CARD 2: DANGER ZONE */}
-            <div className="bg-[#0E0B11] border border-[#3E1A22] rounded-xl p-6">
-              {/* Header */}
+            <div className="bg-[#2A1013] border border-[#6C242B] rounded-xl p-6">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
-                <h2 className="text-sm font-semibold text-[#F87171]">
+                <h2 className="text-[14px] font-bold text-[#DC2626]">
                   Danger zone
                 </h2>
               </div>
 
-              {/* Subtitle */}
-              <p className="text-xs text-slate-400 mt-2 mb-5 leading-relaxed">
+              <p className="text-[11px] text-[#929CAB] mt-2 mb-5 leading-relaxed">
                 Restrict access temporarily or schedule this organization and its retained data for deletion.
               </p>
 
-              {/* Danger Actions */}
               <div className="space-y-4">
-                {/* Suspend organization */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-semibold text-slate-200">
+                    <div className="text-[12px] font-semibold text-[#F2F4F7]">
                       {org.status === 'Suspended' ? 'Unsuspend organization' : 'Suspend organization'}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-[#626C79] mt-0.5">
                       Reversible
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsSuspendModalOpen(true)}
-                    className="bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    className="bg-[#DC2626] hover:bg-[#B91C1C] text-[#F2F4F7] text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
                   >
                     {org.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
                   </button>
                 </div>
 
-                {/* Delete organization */}
                 <div className="flex items-center justify-between pt-4 border-t border-[#26151B]">
                   <div>
-                    <div className="text-xs font-semibold text-slate-200">
+                    <div className="text-[12px] font-semibold text-[#F2F4F7]">
                       Delete organization
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-[#626C79] mt-0.5">
                       90-day retention
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    className="bg-[#DC2626] hover:bg-[#B91C1C] text-[#F2F4F7] text-[12px] font-semibold px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
                   >
                     Delete
                   </button>
@@ -956,15 +895,12 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 2: PEOPLE */}
-      {/* ======================================================== */}
       {activeTab === 'people' && (
         <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
             <div>
               <h2 className="text-base font-semibold text-white">Team Members & Admins</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#626C79] mt-0.5">
                 Manage organization administrators, instructors, and proctor reviewers.
               </p>
             </div>
@@ -979,7 +915,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0E1523] text-slate-400 uppercase font-mono tracking-wider border-b border-[#1A2333]">
+              <thead className="bg-[#0E1523] text-[#626C79] uppercase font-mono tracking-wider border-b border-[#1A2333]">
                 <tr>
                   <th className="py-3 px-4">User</th>
                   <th className="py-3 px-4">Role</th>
@@ -1007,10 +943,10 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                         {u.status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400">
+                    <td className="py-3.5 px-4 font-mono text-[#626C79]">
                       {u.twoFa ? 'Enabled' : 'Disabled'}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400">{u.lastActive}</td>
+                    <td className="py-3.5 px-4 font-mono text-[#626C79]">{u.lastActive}</td>
                     <td className="py-3.5 px-4 text-right">
                       <button
                         type="button"
@@ -1031,20 +967,17 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 3: SUBSCRIPTIONS */}
-      {/* ======================================================== */}
       {activeTab === 'subscriptions' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-4">
-            <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">Current Tier</div>
+            <div className="text-xs font-mono text-[#626C79] uppercase tracking-wider">Current Tier</div>
             <div className="text-2xl font-bold text-white flex items-center gap-3">
               <span>{org.plan}</span>
               <span className="text-xs px-2 py-0.5 rounded bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/40 font-mono font-normal">
                 Annual
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#626C79]">
               Includes full candidate AI proctoring, audio/video telemetry analysis, and dedicated review pipelines.
             </p>
             <button
@@ -1057,7 +990,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
           </div>
 
           <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-4">
-            <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">Seats Quota</div>
+            <div className="text-xs font-mono text-[#626C79] uppercase tracking-wider">Seats Quota</div>
             <div className="text-2xl font-bold text-white font-mono">
               {org.activeSeats} <span className="text-sm text-slate-500 font-normal">/ {org.seatsLimit}</span>
             </div>
@@ -1067,17 +1000,17 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                 style={{ width: `${(org.activeSeats / org.seatsLimit) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#626C79]">
               12 seats remaining. Additional seats can be purchased dynamically.
             </p>
           </div>
 
           <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-4">
-            <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">Billing Renewal</div>
+            <div className="text-xs font-mono text-[#626C79] uppercase tracking-wider">Billing Renewal</div>
             <div className="text-2xl font-bold text-white font-mono">
               2026-12-14
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#626C79]">
               Trial length of {org.trialLength} active with enterprise SLA support tier enabled.
             </p>
             <div className="text-xs font-mono text-[#10B981] flex items-center gap-1.5">
@@ -1088,15 +1021,12 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 4: USAGE */}
-      {/* ======================================================== */}
       {activeTab === 'usage' && (
         <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
             <div>
               <h2 className="text-base font-semibold text-white">Telemetry & Consumption Breakdown</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#626C79] mt-0.5">
                 Proctoring bandwidth, video storage retention, and API throughput for this tenant.
               </p>
             </div>
@@ -1105,22 +1035,22 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
-              <span className="text-xs text-slate-400">Total Attempts</span>
+              <span className="text-xs text-[#626C79]">Total Attempts</span>
               <div className="text-2xl font-bold font-mono text-white mt-1">1,284</div>
               <span className="text-[11px] text-[#10B981] mt-1 block">+18.4% from last month</span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
-              <span className="text-xs text-slate-400">Proctored Hours</span>
+              <span className="text-xs text-[#626C79]">Proctored Hours</span>
               <div className="text-2xl font-bold font-mono text-white mt-1">942 hrs</div>
-              <span className="text-[11px] text-slate-400 mt-1 block">Avg 44m per session</span>
+              <span className="text-[11px] text-[#626C79] mt-1 block">Avg 44m per session</span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
-              <span className="text-xs text-slate-400">Archived Media</span>
+              <span className="text-xs text-[#626C79]">Archived Media</span>
               <div className="text-2xl font-bold font-mono text-[#EF4444] mt-1">41.8 GB</div>
               <span className="text-[11px] text-[#EF4444] mt-1 block">84% of 50 GB allowance</span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
-              <span className="text-xs text-slate-400">API Calls (30d)</span>
+              <span className="text-xs text-[#626C79]">API Calls (30d)</span>
               <div className="text-2xl font-bold font-mono text-white mt-1">93,412</div>
               <span className="text-[11px] text-[#10B981] mt-1 block">99.98% success rate</span>
             </div>
@@ -1128,15 +1058,12 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 5: AUDIT LOG */}
-      {/* ======================================================== */}
       {activeTab === 'audit' && (
         <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-[#131A2B]">
             <div>
               <h2 className="text-base font-semibold text-white">Organization Audit Trail</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#626C79] mt-0.5">
                 Tamper-evident record of all platform mutations, logins, and tenant operations.
               </p>
             </div>
@@ -1145,7 +1072,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0E1523] text-slate-400 uppercase font-mono tracking-wider border-b border-[#1A2333]">
+              <thead className="bg-[#0E1523] text-[#626C79] uppercase font-mono tracking-wider border-b border-[#1A2333]">
                 <tr>
                   <th className="py-3 px-4">Action</th>
                   <th className="py-3 px-4">Actor</th>
@@ -1164,7 +1091,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                   <tr key={idx} className="hover:bg-[#111726]/50">
                     <td className="py-3.5 px-4 font-mono text-[#F59E0B]">{row.action}</td>
                     <td className="py-3.5 px-4 font-medium text-white">{row.actor}</td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400">{row.ip}</td>
+                    <td className="py-3.5 px-4 font-mono text-[#626C79]">{row.ip}</td>
                     <td className="py-3.5 px-4 font-mono text-slate-500">{row.date}</td>
                   </tr>
                 ))}
@@ -1174,9 +1101,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 1: EDIT ORGANIZATION */}
-      {/* ======================================================== */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
@@ -1188,7 +1112,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-[#626C79] hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1282,9 +1206,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 2: IMPERSONATE MODAL */}
-      {/* ======================================================== */}
       {isImpersonateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
@@ -1299,7 +1220,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                   setIsImpersonateModalOpen(false);
                   setImpersonateTokenResult(null);
                 }}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-[#626C79] hover:text-white p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1383,7 +1304,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 font-mono text-[11px] mb-1">
+                  <label className="block text-[#626C79] font-mono text-[11px] mb-1">
                     BEARER TOKEN (READ-ONLY)
                   </label>
                   <div className="p-3 bg-[#0E1523] border border-[#23334D] rounded-lg font-mono text-[11px] text-slate-300 break-all select-all">
@@ -1421,9 +1342,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 3: SUSPEND / UNSUSPEND CONFIRMATION */}
-      {/* ======================================================== */}
       {isSuspendModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#3E1A22] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -1435,7 +1353,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                 <h3 className="text-base font-semibold text-white">
                   {org.status === 'Suspended' ? 'Unsuspend Organization' : 'Suspend Organization'}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-mono">{org.name} ({org.slug})</p>
+                <p className="text-xs text-[#626C79] mt-0.5 font-mono">{org.name} ({org.slug})</p>
               </div>
             </div>
 
@@ -1447,7 +1365,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
 
             {org.status !== 'Suspended' && (
               <div>
-                <label className="block text-xs text-slate-400 font-medium mb-1">
+                <label className="block text-xs text-[#626C79] font-medium mb-1">
                   Suspension Reason (Required for Audit Log)
                 </label>
                 <input
@@ -1481,9 +1399,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 4: DELETE CONFIRMATION */}
-      {/* ======================================================== */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#3E1A22] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -1493,7 +1408,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
               </div>
               <div>
                 <h3 className="text-base font-semibold text-white">Delete Organization</h3>
-                <p className="text-xs text-slate-400 mt-0.5 font-mono">90-Day Retention Policy</p>
+                <p className="text-xs text-[#626C79] mt-0.5 font-mono">90-Day Retention Policy</p>
               </div>
             </div>
 
@@ -1502,7 +1417,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
             </p>
 
             <div>
-              <label className="block text-xs text-slate-400 font-medium mb-1">
+              <label className="block text-xs text-[#626C79] font-medium mb-1">
                 Type <span className="font-mono text-white font-semibold">{org.slug}</span> to confirm:
               </label>
               <input

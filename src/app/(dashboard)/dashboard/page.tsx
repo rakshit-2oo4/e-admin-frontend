@@ -26,17 +26,14 @@ interface RecentOrg {
 }
 
 export default function OverviewPage() {
-  // Query backend overview metrics
   const { data: stats } = useQuery<OverviewStats>({
     queryKey: ['overview-stats'],
     queryFn: () => api<OverviewStats>('/stats/overview').catch(() => null as any),
     staleTime: 30_000,
   });
 
-  // Action dropdown state
   const [activeMenuOrgId, setActiveMenuOrgId] = useState<string | null>('zenith-labs');
 
-  // Sparkline SVG path helper
   const Sparkline = () => (
     <svg className="w-20 h-7 overflow-visible" viewBox="0 0 80 28" fill="none">
       <path
@@ -166,102 +163,94 @@ export default function OverviewPage() {
       {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
+          <h1 className="text-[22px] sm:text-3xl font-normal text-white tracking-tight">
             Overview
           </h1>
-          <p className="text-xs font-mono uppercase tracking-wider text-[#64748B] mt-1">
+          <p className="text-[9px] font-mono uppercase tracking-wider text-[#64748B] mt-1">
             PLATFORM SNAPSHOT · 05 OCT 2026 · 12:32 UTC
           </p>
         </div>
 
-        {/* Live System Indicator Badge */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <span className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
-          <span className="text-xs font-mono font-medium tracking-widest text-[#E2E8F0] uppercase">
+          <span className="text-[9px] font-mono font-medium tracking-widest text-[#94A3B8] uppercase">
             ALL SYSTEMS REPORTING
           </span>
         </div>
       </div>
 
-      {/* 2. Top Metric Cards (4 Cards Grid) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Organizations */}
-        <div className="bg-[#0D121F] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
+        <div className="bg-[#1B2430] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-sm font-medium text-[#8F9CAE]">Organizations</span>
+            <span className="text-[11px] font-medium text-[#94A3B8]">Organizations</span>
             <Sparkline />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-white tracking-tight font-sans">
+            <div className="text-[25px] font-medium text-[#F8FAFC] tracking-tight font-sans">
               {stats?.totalOrgs ?? 0}
             </div>
-            <div className="text-xs font-mono text-[#10B981] mt-1.5 flex items-center gap-1">
+            <div className="text-[10px] font-mono text-[#22C55E] mt-1.5 flex items-center gap-1">
               +3 this month
             </div>
           </div>
         </div>
 
-        {/* Card 2: Active Attempts */}
-        <div className="bg-[#0D121F] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
+        <div className="bg-[#1B2430] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-sm font-medium text-[#8F9CAE]">Active attempts</span>
+            <span className="text-[11px] font-medium text-[#94A3B8]">Active attempts</span>
             <Sparkline />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-white tracking-tight font-sans">
+            <div className="text-[25px] font-medium text-[#F8FAFC] tracking-tight font-sans">
               128
             </div>
-            <div className="text-xs font-mono text-[#10B981] mt-1.5 flex items-center gap-1">
+            <div className="text-[10px] font-mono text-[#22C55E] mt-1.5 flex items-center gap-1">
               +12% vs last week
             </div>
           </div>
         </div>
 
         {/* Card 3: Storage Used */}
-        <div className="bg-[#0D121F] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
+        <div className="bg-[#1B2430] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-sm font-medium text-[#8F9CAE]">Storage used</span>
+            <span className="text-[11px] font-medium text-[#8F9CAE]">Storage used</span>
             <Sparkline />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-white tracking-tight font-sans">
+            <div className="text-[25px] font-medium text-[#F8FAFC] tracking-tight font-sans">
               2.4 TB
             </div>
-            <div className="text-xs font-mono text-[#10B981] mt-1.5 flex items-center gap-1">
+            <div className="text-[10px] font-mono text-[#22C55E] mt-1.5 flex items-center gap-1">
               +180 GB this week
             </div>
           </div>
         </div>
 
         {/* Card 4: Platform Users */}
-        <div className="bg-[#0D121F] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
+        <div className="bg-[#1B2430] border border-[#172033] rounded-xl p-5 hover:border-[#202C45] transition-colors flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-sm font-medium text-[#8F9CAE]">Platform users</span>
+            <span className="text-[11px] font-medium text-[#8F9CAE]">Platform users</span>
             <Sparkline />
           </div>
           <div className="mt-4">
-            <div className="text-3xl font-bold text-white tracking-tight font-sans">
+            <div className="text-[25px] font-medium text-[#F8FAFC] tracking-tight font-sans">
               {stats?.totalUsers ?? 0}
             </div>
-            <div className="text-xs font-mono text-[#64748B] mt-1.5">
+            <div className="text-[10px] font-mono text-[#64748B] mt-1.5">
               6 super admins
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Middle Section: Attempts Chart (Left) + System Health (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left: Attempts Chart Card (8 Columns) */}
-        <div className="lg:col-span-8 bg-[#0D121F] border border-[#172033] rounded-xl p-5 flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-[#1B2430] border border-[#172033] rounded-xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between pb-6">
-            <h2 className="text-sm font-semibold text-white">Attempts</h2>
-            <span className="text-xs font-mono text-[#64748B]">30 days · UTC</span>
+            <h2 className="text-[12px] font-medium text-[#F8FAFC]">Attempts</h2>
+            <span className="text-[9px] font-mono text-[#64748B]">30 days · UTC</span>
           </div>
 
-          {/* Bar Chart Container */}
           <div className="flex flex-1 min-h-[220px]">
-            {/* Y-Axis Ticks */}
             <div className="flex flex-col justify-between text-[11px] font-mono text-[#64748B] pr-4 select-none pb-7">
               <span>160</span>
               <span>120</span>
@@ -270,9 +259,7 @@ export default function OverviewPage() {
               <span>0</span>
             </div>
 
-            {/* Bars Canvas with Grid lines */}
             <div className="flex-1 flex flex-col justify-between relative">
-              {/* Horizontal Grid Guidelines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7">
                 <div className="border-b border-[#141C2E] w-full" />
                 <div className="border-b border-[#141C2E] w-full" />
@@ -281,7 +268,6 @@ export default function OverviewPage() {
                 <div className="border-b border-[#1A2338] w-full" />
               </div>
 
-              {/* Bars Row */}
               <div className="flex-1 flex items-end justify-between gap-1.5 sm:gap-3 z-10 px-2 pb-7">
                 {attemptBars.map((bar, idx) => {
                   const heightPercent = (bar.value / 160) * 100;
@@ -290,12 +276,10 @@ export default function OverviewPage() {
                       key={idx}
                       className="flex-1 flex flex-col items-center group relative h-full justify-end"
                     >
-                      {/* Tooltip on hover */}
                       <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-[#151D2C] border border-[#232F47] text-white text-[10px] font-mono py-0.5 px-1.5 rounded pointer-events-none whitespace-nowrap z-20">
                         {bar.value} attempts
                       </div>
 
-                      {/* Bar Pillar */}
                       <div
                         style={{ height: `${heightPercent}%` }}
                         className={`w-full max-w-[42px] rounded-t-sm transition-all duration-200 ${bar.isHighlight
@@ -308,7 +292,6 @@ export default function OverviewPage() {
                 })}
               </div>
 
-              {/* X-Axis Labels */}
               <div className="flex justify-between text-[11px] font-mono text-[#64748B] pt-2 border-t border-[#141C2E] px-2">
                 <span>0  Sep 06</span>
                 <span>Sep 13</span>
@@ -320,22 +303,21 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {/* Right: System Health Card (4 Columns) */}
         <div className="lg:col-span-4 bg-[#0D121F] border border-[#172033] rounded-xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between pb-4">
-            <h2 className="text-sm font-semibold text-white">System health</h2>
-            <span className="text-xs font-mono text-[#64748B]">Live</span>
+            <h2 className="text-[12px] font-medium text-[#F8FAFC]">System health</h2>
+            <span className="text-[9px] font-mono text-[#64748B]">Live</span>
           </div>
 
           <div className="space-y-3.5 my-auto">
             {healthServices.map((svc) => (
               <div
                 key={svc.name}
-                className="flex items-center justify-between text-xs py-1"
+                className="flex items-center justify-between text-[10px] py-1"
               >
                 <div className="flex items-center gap-2.5">
                   <span
-                    className={`w-2 h-2 rounded-full ${svc.color === 'emerald'
+                    className={`w-2 h-2 rounded-xs ${svc.color === 'emerald'
                       ? 'bg-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.5)]'
                       : 'bg-[#F59E0B] shadow-[0_0_6px_rgba(245,158,11,0.5)]'
                       }`}
@@ -344,7 +326,7 @@ export default function OverviewPage() {
                 </div>
 
                 <span
-                  className={`px-3 py-0.5 rounded-full text-xs font-mono border ${svc.color === 'emerald'
+                  className={`px-3 py-0.5 rounded-full text-[12px] font-mono border ${svc.color === 'emerald'
                     ? 'border-[#10B981]/40 text-[#10B981] bg-[#10B981]/10'
                     : 'border-[#F59E0B]/50 text-[#F59E0B] bg-[#F59E0B]/10'
                     }`}
@@ -362,18 +344,15 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* 4. Bottom Section: Recent Organizations (Left) + Activity Log (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left: Recent Organizations Table (8 Columns) */}
         <div className="lg:col-span-8 bg-[#0D121F] border border-[#172033] rounded-xl p-5">
           <div className="flex items-center justify-between pb-4">
-            <h2 className="text-sm font-semibold text-white">Recent organizations</h2>
-            <span className="text-xs font-mono text-[#64748B]">Updated 34s ago</span>
+            <h2 className="text-[12px] font-medium text-[#F8FAFC]">Recent organizations</h2>
+            <span className="text-[9px] font-mono text-[#64748B]">Updated 34s ago</span>
           </div>
 
-          {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-[10px]">
               <thead>
                 <tr className="border-b border-[#141C2E] text-[10px] font-mono text-[#64748B] uppercase tracking-wider">
                   <th className="py-2.5 font-medium">NAME</th>
@@ -420,7 +399,6 @@ export default function OverviewPage() {
                         </span>
                       </td>
                       <td className="py-3.5 text-right relative pr-2">
-                        {/* Two dots button */}
                         <button
                           type="button"
                           onClick={() =>
@@ -431,7 +409,6 @@ export default function OverviewPage() {
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
 
-                        {/* Dropdown Menu (Open on Zenith Labs in screenshot) */}
                         {isMenuOpen && (
                           <div className="absolute right-0 top-10 w-44 bg-[#0F1626] border border-[#1E293F] rounded-lg shadow-2xl p-1.5 z-30 text-left animate-in fade-in zoom-in-95 duration-100">
                             <Link
@@ -463,19 +440,16 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {/* Right: Recent Platform Activity Card (4 Columns) */}
         <div className="lg:col-span-4 bg-[#0D121F] border border-[#172033] rounded-xl p-5 flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-white pb-4">
+            <h2 className="text-[12px] font-medium text-[#F8FAFC] pb-4">
               Recent platform activity
             </h2>
 
-            {/* Activity Stream Items */}
             <div className="space-y-4">
               {activities.map((act, index) => (
-                <div key={index} className="flex items-center justify-between text-xs gap-3">
+                <div key={index} className="flex items-center justify-between text-[10px] gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    {/* User Initials Circle Avatar */}
                     <div
                       className={`w-6 h-6 rounded-full text-[10px] font-semibold flex items-center justify-center shrink-0 ${act.type === 'system'
                         ? 'bg-[#1E293B] text-[#94A3B8] border border-[#334155]'
@@ -498,11 +472,10 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          {/* Footer Link */}
           <div className="pt-6 border-t border-[#141C2E] mt-6">
             <Link
               href="/audit"
-              className="text-xs font-semibold text-[#F59E0B] hover:text-[#FBBF24] flex items-center gap-1 transition-colors"
+              className="text-[10px] font-semibold text-[#FBBF24] hover:text-[#FBBF24] flex items-center gap-1 transition-colors"
             >
               <span>View full audit log</span>
               <ArrowRight className="w-3.5 h-3.5" />

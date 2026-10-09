@@ -5,16 +5,10 @@ import { useAuth } from '@/providers/auth-provider';
 import {
   Lock,
   CheckCircle2,
-  KeyRound,
-  Shield,
   Laptop,
   Smartphone,
-  LogOut,
-  Bell,
-  Clock,
   Eye,
   EyeOff,
-  Check,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -23,19 +17,15 @@ type SettingsTab = 'profile' | 'password' | 'sessions' | 'preferences';
 export default function SettingsPage() {
   const { user } = useAuth();
 
-  // Active Tab
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
-  // Profile Form state
   const [fullName, setFullName] = useState(user?.name || 'Alex Kim');
   const [email] = useState(user?.email || 'alex.kim@ebenchcampus.com');
   const [role] = useState(user?.role || 'PLATFORM_OWNER');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Avatar state
   const [avatarInitials, setAvatarInitials] = useState('AK');
 
-  // Sync avatar with full name
   useEffect(() => {
     if (fullName) {
       const parts = fullName.trim().split(/\s+/);
@@ -47,7 +37,6 @@ export default function SettingsPage() {
     }
   }, [fullName]);
 
-  // Password Form state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,13 +44,11 @@ export default function SettingsPage() {
   const [showNewPw, setShowNewPw] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  // Preferences Form state
   const [timeDisplay, setTimeDisplay] = useState('UTC');
   const [sessionTimeout, setSessionTimeout] = useState('15');
   const [autoLiveTail, setAutoLiveTail] = useState(true);
   const [securityAlerts, setSecurityAlerts] = useState(true);
 
-  // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -69,7 +56,6 @@ export default function SettingsPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Handle Save Profile
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingProfile(true);
@@ -88,7 +74,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Handle Update Password
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 12) {
@@ -122,7 +107,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-16">
-      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#101826] border border-[#23334D] text-white px-4 py-3 rounded-lg shadow-xl text-xs font-mono animate-in fade-in slide-in-from-bottom-2 duration-200">
           <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
@@ -130,37 +114,32 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TOP BREADCRUMB */}
-      <div className="flex items-center gap-2 text-xs font-sans">
-        <Link href="/settings" className="text-slate-400 hover:text-white transition-colors">
+      <div className="flex items-center gap-2 text-[12px] font-sans">
+        <Link href="/settings" className="text-[#8492A2] hover:text-white transition-colors">
           Settings
         </Link>
-        <span className="text-slate-600 font-mono">/</span>
-        <span className="text-slate-300 font-medium capitalize">{activeTab}</span>
+        <span className="text-[#8492A2] font-mono">/</span>
+        <span className="text-[#E7EDF4] font-medium capitalize">{activeTab}</span>
       </div>
 
-      {/* PAGE HEADER */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">
+        <h1 className="text-[24px] sm:text-3xl font-normal text-[#E7EDF4] tracking-tight leading-none">
           Settings
         </h1>
-        <p className="text-xs text-slate-400 font-normal mt-1.5">
+        <p className="text-[12px] text-[#8492A2] font-normal mt-1.5">
           Manage your operator profile and authentication preferences.
         </p>
       </div>
 
-      {/* 2-COLUMN SETTINGS LAYOUT */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-2">
-        {/* LEFT COLUMN: TABS NAVIGATION */}
         <div className="md:col-span-3 space-y-1">
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              activeTab === 'profile'
-                ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#0E1523]'
-            }`}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeTab === 'profile'
+              ? 'bg-[#3A2A12] text-[#FFC56B] border border-[#B45309]/50 shadow-sm'
+              : 'text-[#8492A2] hover:text-[#E7EDF4] hover:bg-[#0E1523]'
+              }`}
           >
             Profile
           </button>
@@ -168,11 +147,10 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('password')}
-            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              activeTab === 'password'
-                ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#0E1523]'
-            }`}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeTab === 'password'
+              ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
+              : 'text-[#8492A2] hover:text-[#E7EDF4] hover:bg-[#0E1523]'
+              }`}
           >
             Password
           </button>
@@ -180,11 +158,10 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('sessions')}
-            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              activeTab === 'sessions'
-                ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#0E1523]'
-            }`}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeTab === 'sessions'
+              ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
+              : 'text-[#8492A2] hover:text-[#E7EDF4] hover:bg-[#0E1523]'
+              }`}
           >
             Sessions
           </button>
@@ -192,39 +169,32 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab('preferences')}
-            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-              activeTab === 'preferences'
-                ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#0E1523]'
-            }`}
+            className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${activeTab === 'preferences'
+              ? 'bg-[#241A0B] text-[#F59E0B] border border-[#B45309]/50 shadow-sm'
+              : 'text-[#8492A2] hover:text-[#E7EDF4] hover:bg-[#0E1523]'
+              }`}
           >
             Preferences
           </button>
         </div>
 
-        {/* RIGHT COLUMN: CARD CONTENT */}
         <div className="md:col-span-9 max-w-2xl">
-          {/* TAB 1: PROFILE (EXACT FIGMA DESIGN) */}
           {activeTab === 'profile' && (
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 sm:p-8 space-y-6">
-              {/* Card Header */}
               <div>
-                <h2 className="text-base font-semibold text-white">Profile</h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <h2 className="text-[18px] font-normal text-[#E7EDF4]">Profile</h2>
+                <p className="text-[12px] text-[#8492A2] mt-1">
                   Your identity is visible in audit trails and administrative activity.
                 </p>
               </div>
 
-              {/* Avatar Section */}
               <div className="flex items-center gap-4 pt-1">
-                {/* Circular Gold Avatar */}
                 <div className="w-14 h-14 rounded-full bg-[#241A0B] text-[#F59E0B] border border-[#F59E0B]/50 flex items-center justify-center font-bold text-sm select-none">
                   {avatarInitials}
                 </div>
 
-                {/* Name & Change Button */}
                 <div>
-                  <div className="text-xs font-semibold text-white">{fullName}</div>
+                  <div className="text-[13px] font-semibold text-[#E7EDF4]">{fullName}</div>
                   <button
                     type="button"
                     onClick={() => {
@@ -238,11 +208,9 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Profile Form */}
               <form onSubmit={handleSaveProfile} className="space-y-4 pt-2">
-                {/* Full name field */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-[12px] font-semibold text-[#8492A2] mb-1.5">
                     Full name
                   </label>
                   <input
@@ -254,9 +222,8 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Email field (Read-only with icon) */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-[12px] font-semibold text-[#8492A2] mb-1.5">
                     Email
                   </label>
                   <div className="relative">
@@ -268,36 +235,34 @@ export default function SettingsPage() {
                     />
                     <Lock className="w-3.5 h-3.5 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1.5">
+                  <p className="text-[11px] text-[#5F6C7A] mt-1.5">
                     Email is managed through your identity provider.
                   </p>
                 </div>
 
-                {/* Role field (Read-only container with badge) */}
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-[12px] font-semibold text-[#8492A2] mb-1.5">
                     Role
                   </label>
                   <div className="w-full bg-[#0E1523] border border-[#222E42] rounded-lg px-3.5 py-2.5 flex items-center justify-between">
-                    <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[11px] font-semibold text-[#F59E0B] border border-[#B45309] bg-[#78350F]/40 uppercase">
+                    <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[11px] font-normal text-[#F59E0B] border border-[#B45309] bg-[#78350F]/40 uppercase">
                       {role.replace('SUPER_ADMIN', 'PLATFORM_OWNER')}
                     </span>
-                    <span className="text-[11px] text-slate-500 font-mono">
+                    <span className="text-[11px] text-[#5F6C7A] font-mono">
                       Read only
                     </span>
                   </div>
                 </div>
 
-                {/* Card Footer: Last Updated & Save Button */}
                 <div className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-[#162033]/60">
-                  <span className="font-mono text-[10px] text-slate-500 tracking-wider uppercase">
+                  <span className="font-mono text-[10px] text-[#5F6C7A] tracking-wider uppercase">
                     LAST UPDATED 2026-10-05 12:38 UTC
                   </span>
 
                   <button
                     type="submit"
                     disabled={isSavingProfile}
-                    className="bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold text-xs px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
+                    className="bg-[#F5A524] hover:bg-[#D97706] text-[#070A0E] font-normal text-[14px] px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
                   >
                     {isSavingProfile ? 'Saving…' : 'Save changes'}
                   </button>
@@ -306,7 +271,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* TAB 2: PASSWORD */}
           {activeTab === 'password' && (
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 sm:p-8 space-y-6">
               <div>
@@ -392,7 +356,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* TAB 3: SESSIONS */}
           {activeTab === 'sessions' && (
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 sm:p-8 space-y-6">
               <div>
@@ -455,7 +418,6 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* TAB 4: PREFERENCES */}
           {activeTab === 'preferences' && (
             <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 sm:p-8 space-y-6">
               <div>
