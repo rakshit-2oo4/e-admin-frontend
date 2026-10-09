@@ -15,8 +15,10 @@ import {
   PlayCircle,
   ExternalLink,
   CheckCircle2,
+  Download,
+  Loader2,
 } from 'lucide-react';
-import { api, ApiError } from '@/lib/api';
+import { api, downloadFile, ApiError } from '@/lib/api';
 
 interface OrgItem {
   id: string;
@@ -33,7 +35,6 @@ interface OrgItem {
 export default function OrganizationsPage() {
   const queryClient = useQueryClient();
 
-  // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<string>('Active');
@@ -41,13 +42,10 @@ export default function OrganizationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Row Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // Action Dropdowns
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null);
 
-  // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
   const [newOrgSlug, setNewOrgSlug] = useState('');
@@ -57,8 +55,8 @@ export default function OrganizationsPage() {
   const [newOwnerPassword, setNewOwnerPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  // Toast feedback state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -75,18 +73,28 @@ export default function OrganizationsPage() {
     return pass;
   };
 
-  // Query live API from NestJS / PostgreSQL backend
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, planFilter, statusFilter, sortBy]);
+
   const { data: apiData, isLoading, refetch } = useQuery({
-    queryKey: ['platform-orgs', currentPage, rowsPerPage, searchTerm, planFilter, statusFilter],
+    queryKey: ['platform-orgs', currentPage, rowsPerPage, debouncedSearch, planFilter, statusFilter, sortBy],
     queryFn: async () => {
       try {
         const queryParams: Record<string, string | number> = {
           page: currentPage,
           limit: rowsPerPage,
         };
-        if (searchTerm.trim()) queryParams.search = searchTerm.trim();
+        if (debouncedSearch.trim()) queryParams.search = debouncedSearch.trim();
         if (planFilter !== 'All') queryParams.plan = planFilter.toLowerCase();
         queryParams.status = statusFilter.toLowerCase();
+        queryParams.sortBy = sortBy.toLowerCase();
 
         const res = await api<{
           items: any[];
@@ -101,7 +109,6 @@ export default function OrganizationsPage() {
     staleTime: 5_000,
   });
 
-  // Calculate local dataset strictly from real database items
   const items: OrgItem[] = useMemo(() => {
     if (!apiData?.items) return [];
 
@@ -125,10 +132,7 @@ export default function OrganizationsPage() {
       status: o.deletedAt ? 'Deleted' : o.suspendedAt ? 'Suspended' : 'Active',
     }));
 
-    // Client-side Sort support
-    if (sortBy === 'Oldest') {
-      dataset = [...dataset].reverse();
-    } else if (sortBy === 'Attempts') {
+    if (sortBy === 'Attempts') {
       dataset = [...dataset].sort((a, b) => b.attempts - a.attempts);
     }
 
@@ -196,28 +200,25 @@ export default function OrganizationsPage() {
     );
   };
 
-  // CSV Export
-  const handleExportCSV = () => {
-    const headers = ['Name', 'Slug', 'Plan', 'Users', 'Attempts', 'Storage', 'Created', 'Status'];
-    const rows = items.map((i) => [
-      `"${i.name}"`,
-      i.slug,
-      i.plan,
-      i.users,
-      i.attempts,
-      i.storage,
-      `"${i.created}"`,
-      i.status,
-    ]);
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `organizations-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const queryParams: Record<string, string | number> = {};
+      if (searchTerm.trim()) queryParams.search = searchTerm.trim();
+      if (planFilter !== 'All') queryParams.plan = planFilter.toLowerCase();
+      queryParams.status = statusFilter.toLowerCase();
+      queryParams.sortBy = sortBy.toLowerCase();
+
+      await downloadFile('/orgs/export', {
+        query: queryParams,
+        defaultFilename: `organizations-${new Date().toISOString().slice(0, 10)}.csv`,
+      });
+      showToast('Organizations exported to CSV');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to export organizations');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Create Org Mutation
@@ -317,10 +318,10 @@ export default function OrganizationsPage() {
       {/* 1. Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
+          <h1 className="text-[22px] sm:text-3xl font-medium text-[#F8FAFC] tracking-tight">
             Organizations
           </h1>
-          <p className="text-xs font-mono uppercase tracking-wider text-[#64748B] mt-1">
+          <p className="text-[11px] font-mono uppercase tracking-wider text-[#94A3B8] mt-1">
             {totalCount} organizations · {suspendedCount} suspended · {deletedCount} deleted
           </p>
         </div>
@@ -330,15 +331,21 @@ export default function OrganizationsPage() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#101624] border border-[#263147] text-xs font-medium text-slate-300 hover:bg-[#162033] hover:text-white transition-colors"
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#101624] border border-[#263147] text-[14px] font-medium text-[#94A3B8] hover:bg-[#162033] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <span>Export CSV</span>
+            {exporting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F59E0B] text-xs font-semibold text-black hover:bg-[#FBBF24] transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F59E0B] text-[14px] font-semibold text-[#080B10] hover:bg-[#FBBF24] transition-colors shadow-sm"
           >
             <span>Create organization</span>
           </button>
@@ -363,7 +370,6 @@ export default function OrganizationsPage() {
             </span>
           </div>
 
-          {/* Plan Filter Dropdown */}
           <div className="relative">
             <select
               value={planFilter}
@@ -380,7 +386,6 @@ export default function OrganizationsPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B]" />
           </div>
 
-          {/* Status Filter Dropdown */}
           <div className="relative">
             <select
               value={statusFilter}
@@ -396,7 +401,6 @@ export default function OrganizationsPage() {
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B]" />
           </div>
 
-          {/* Sort By Dropdown */}
           <div className="relative">
             <select
               value={sortBy}
@@ -413,9 +417,8 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
-        {/* Active Filters Summary Right Indicator */}
         {activeFiltersCount > 0 && (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-2 text-[9px] font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
             <span className="text-[#8B98A9]">
               {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''} active
@@ -423,7 +426,7 @@ export default function OrganizationsPage() {
             <button
               type="button"
               onClick={handleClearFilters}
-              className="text-[#F59E0B] hover:text-[#FBBF24] font-medium ml-1 transition-colors"
+              className="text-[#F59E0B] text-[10px] hover:text-[#FBBF24] font-semibold ml-1 transition-colors"
             >
               Clear
             </button>
@@ -431,7 +434,6 @@ export default function OrganizationsPage() {
         )}
       </div>
 
-      {/* 3. Multi-Select Floating Amber Action Banner (Image 2) */}
       {selectedIds.length > 0 && (
         <div className="bg-[#121927] border border-[#F59E0B] rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-150 shadow-lg">
           <div className="flex items-center gap-3">
@@ -473,13 +475,11 @@ export default function OrganizationsPage() {
         </div>
       )}
 
-      {/* 4. Table Container */}
       <div className="bg-[#0B101A] border border-[#161F33] rounded-xl overflow-hidden min-h-[480px] flex flex-col justify-between">
-        {/* Table Content */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[10px]">
             <thead>
-              <tr className="border-b border-[#141C2E] text-[10px] font-mono text-[#64748B] uppercase tracking-wider bg-[#090D16]">
+              <tr className="border-b border-[#141C2E] text-[8px] font-mono text-[#64748B] uppercase tracking-wider bg-[#090D16]">
                 <th className="py-3 px-4 w-10">
                   <input
                     type="checkbox"
@@ -500,7 +500,6 @@ export default function OrganizationsPage() {
               </tr>
             </thead>
 
-            {/* Skeleton Loading State (Image 4) */}
             {isLoading ? (
               <tbody className="divide-y divide-[#131A2B]">
                 {Array.from({ length: 8 }).map((_, idx) => (
@@ -537,12 +536,10 @@ export default function OrganizationsPage() {
                 ))}
               </tbody>
             ) : items.length === 0 ? (
-              /* Empty State (Image 3) */
               <tbody>
                 <tr>
                   <td colSpan={9} className="py-24 text-center">
                     <div className="flex flex-col items-center justify-center max-w-sm mx-auto space-y-3">
-                      {/* SearchX Box */}
                       <div className="w-10 h-10 rounded-lg bg-[#111726] border border-[#1E293F] flex items-center justify-center text-[#64748B]">
                         <SearchX className="w-5 h-5" />
                       </div>
@@ -573,13 +570,11 @@ export default function OrganizationsPage() {
                 </tr>
               </tbody>
             ) : (
-              /* Actual Rows (Image 1 & Image 2) */
               <tbody className="divide-y divide-[#131A2B]">
                 {items.map((org) => {
                   const isSelected = selectedIds.includes(org.id);
                   const isMenuOpen = openRowMenuId === org.id;
 
-                  // Left edge stripe color indicator
                   const borderStripe =
                     org.status === 'Active'
                       ? 'border-l-2 border-l-[#10B981]'
@@ -606,7 +601,6 @@ export default function OrganizationsPage() {
                         />
                       </td>
 
-                      {/* Name & Slug */}
                       <td className="py-3.5 px-3 min-w-[200px]">
                         <Link
                           href={`/orgs/${org.id}`}
@@ -619,35 +613,29 @@ export default function OrganizationsPage() {
                         </span>
                       </td>
 
-                      {/* Plan */}
                       <td className="py-3.5 px-3 text-[#94A3B8] font-medium">
                         {org.plan}
                       </td>
 
-                      {/* Users */}
                       <td className="py-3.5 px-3 font-mono text-[#CBD5E1]">
                         {org.users}
                       </td>
 
-                      {/* Attempts */}
                       <td className="py-3.5 px-3 font-mono text-[#CBD5E1]">
                         {org.attempts.toLocaleString()}
                       </td>
 
-                      {/* Storage */}
                       <td className="py-3.5 px-3 font-mono text-[#94A3B8]">
                         {org.storage}
                       </td>
 
-                      {/* Created Date */}
                       <td className="py-3.5 px-3 font-mono text-[#8B98A9]">
                         {org.created}
                       </td>
 
-                      {/* Status Pill Badge */}
                       <td className="py-3.5 px-3">
                         <span
-                          className={`inline-block px-3 py-0.5 rounded-full text-xs font-mono border ${org.status === 'Active'
+                          className={`inline-block px-3 py-0.5 rounded-md text-[12px] font-mono border ${org.status === 'Active'
                             ? 'border-[#10B981]/50 text-[#10B981] bg-[#10B981]/10'
                             : org.status === 'Suspended'
                               ? 'border-[#F59E0B]/50 text-[#F59E0B] bg-[#F59E0B]/10'
@@ -658,7 +646,6 @@ export default function OrganizationsPage() {
                         </span>
                       </td>
 
-                      {/* Row Actions Dropdown */}
                       <td className="py-3.5 px-4 text-right relative">
                         <button
                           type="button"
@@ -671,7 +658,6 @@ export default function OrganizationsPage() {
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
 
-                        {/* Dropdown Menu */}
                         {isMenuOpen && (
                           <div className="absolute right-4 top-10 w-44 bg-[#0F1626] border border-[#1E293F] rounded-lg shadow-2xl p-1.5 z-30 text-left animate-in fade-in zoom-in-95 duration-100">
                             <Link
@@ -727,14 +713,12 @@ export default function OrganizationsPage() {
           </table>
         </div>
 
-        {/* 5. Pagination Footer (Image 4) */}
         <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3.5 border-t border-[#141C2E] bg-[#090D16] text-xs font-mono text-[#8B98A9]">
           <div>
             Showing {rangeStart}-{rangeEnd} of {filteredTotal}
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Rows Per Page Selector */}
             <div className="relative">
               <select
                 value={rowsPerPage}
@@ -749,7 +733,6 @@ export default function OrganizationsPage() {
               <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#64748B]" />
             </div>
 
-            {/* Pagination Number Buttons */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -794,7 +777,6 @@ export default function OrganizationsPage() {
         </div>
       </div>
 
-      {/* 6. Create Organization Modal */}
       {createModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="bg-[#0D121F] border border-[#1E293F] rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">

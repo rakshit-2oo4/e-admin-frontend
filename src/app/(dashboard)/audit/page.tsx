@@ -13,8 +13,9 @@ import {
   AlertTriangle,
   RefreshCw,
   Activity,
+  Loader2,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, downloadFile } from '@/lib/api';
 
 export interface AuditItem {
   id: string;
@@ -54,6 +55,7 @@ export default function AuditLogPage() {
 
   // Expanded row ID
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
@@ -75,7 +77,27 @@ export default function AuditLogPage() {
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch real audit logs strictly from backend PostgreSQL database
+  // Debounced search term for direct database querying
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch filter options directly from backend PostgreSQL database
+  const { data: filterMeta } = useQuery({
+    queryKey: ['platform-audit-filters'],
+    queryFn: async () => {
+      try {
+        return await api<{ actions: string[]; dates: string[]; actors: string[] }>('/audit/filters');
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60_000,
+  });
+
+  // Fetch real audit logs strictly from backend PostgreSQL database with query-based filters
   const {
     data: serverLogs,
     isLoading,
@@ -84,10 +106,27 @@ export default function AuditLogPage() {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: ['platform-audit-logs', liveTail],
+    queryKey: [
+      'platform-audit-logs',
+      liveTail,
+      debouncedSearch,
+      dateFilter,
+      eventFilter,
+      actorFilter,
+      outcomeFilter,
+    ],
     queryFn: async () => {
+      const queryParams: Record<string, string | number> = {
+        limit: 100,
+      };
+      if (debouncedSearch.trim()) queryParams.search = debouncedSearch.trim();
+      if (eventFilter !== 'All') queryParams.action = eventFilter;
+      if (actorFilter !== 'All') queryParams.actor = actorFilter;
+      if (outcomeFilter !== 'All') queryParams.outcome = outcomeFilter;
+      if (dateFilter) queryParams.date = dateFilter;
+
       return await api<{ items: any[]; nextCursor: string | null; limit: number }>('/audit', {
-        query: { limit: 100 },
+        query: queryParams,
       });
     },
     refetchInterval: liveTail ? 5000 : false,
@@ -158,43 +197,27 @@ export default function AuditLogPage() {
     }
   }, [logsList, expandedRowId]);
 
-  // Dynamic filter options derived from real database rows
+  // Filter options derived from database metadata (with fallback to loaded rows)
   const uniqueDates = useMemo(() => {
+    if (filterMeta?.dates && filterMeta.dates.length > 0) return filterMeta.dates;
     const set = new Set(logsList.map((l) => l.dateKey).filter(Boolean));
     return ['', ...Array.from(set)];
-  }, [logsList]);
+  }, [filterMeta, logsList]);
 
   const uniqueEvents = useMemo(() => {
+    if (filterMeta?.actions && filterMeta.actions.length > 0) return filterMeta.actions;
     const set = new Set(logsList.map((l) => l.action));
     return ['All', ...Array.from(set)];
-  }, [logsList]);
+  }, [filterMeta, logsList]);
 
   const uniqueActors = useMemo(() => {
+    if (filterMeta?.actors && filterMeta.actors.length > 0) return filterMeta.actors;
     const set = new Set(logsList.map((l) => l.actor));
     return ['All', ...Array.from(set)];
-  }, [logsList]);
+  }, [filterMeta, logsList]);
 
-  // Filtered logs calculation
-  const filteredLogs = useMemo(() => {
-    return logsList.filter((log) => {
-      // Search
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        log.action.toLowerCase().includes(q) ||
-        log.target.toLowerCase().includes(q) ||
-        log.actor.toLowerCase().includes(q) ||
-        (log.diff && JSON.stringify(log.diff).toLowerCase().includes(q));
-
-      // Filters
-      const matchesEvent = eventFilter === 'All' || log.action === eventFilter;
-      const matchesActor = actorFilter === 'All' || log.actor === actorFilter;
-      const matchesOutcome = outcomeFilter === 'All' || log.outcome === outcomeFilter;
-      const matchesDate = !dateFilter || log.dateKey === dateFilter;
-
-      return matchesSearch && matchesEvent && matchesActor && matchesOutcome && matchesDate;
-    });
-  }, [logsList, searchQuery, eventFilter, actorFilter, outcomeFilter, dateFilter]);
+  // Results are queried directly from the backend PostgreSQL database with all filters applied
+  const filteredLogs = logsList;
 
   // Computed section date header
   const sectionDateLabel = useMemo(() => {
@@ -207,35 +230,27 @@ export default function AuditLogPage() {
     return `${dayName} · ${first.dateKey} · UTC`;
   }, [filteredLogs]);
 
-  // CSV Export handler
-  const handleExportCSV = () => {
-    if (filteredLogs.length === 0) {
-      showToast('No logs to export', true);
-      return;
-    }
-    const headers = ['ID', 'Timestamp', 'Date', 'Action', 'Target', 'Actor', 'Outcome', 'IP', 'Diff'];
-    const rows = filteredLogs.map((l) => [
-      l.id,
-      l.timestamp,
-      l.dateKey,
-      l.action,
-      `"${l.target.replace(/"/g, '""')}"`,
-      `"${l.actor.replace(/"/g, '""')}"`,
-      l.outcome,
-      l.ip || '',
-      `"${JSON.stringify(l.diff || {}).replace(/"/g, '""')}"`,
-    ]);
+  // CSV Export handler from backend API
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const queryParams: Record<string, string | number> = {};
+      if (searchQuery.trim()) queryParams.search = searchQuery.trim();
+      if (eventFilter !== 'All') queryParams.action = eventFilter;
+      if (actorFilter !== 'All') queryParams.actor = actorFilter;
+      if (outcomeFilter !== 'All') queryParams.outcome = outcomeFilter;
+      if (dateFilter) queryParams.date = dateFilter;
 
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `platform-audit-logs-${dateFilter || 'all'}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Exported audit logs to CSV');
+      await downloadFile('/audit/export', {
+        query: queryParams,
+        defaultFilename: `platform-audit-logs-${dateFilter || 'all'}.csv`,
+      });
+      showToast('Exported audit logs to CSV');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to export audit logs', true);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -505,10 +520,15 @@ export default function AuditLogPage() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="bg-[#0B101B] border border-[#1A2333] hover:bg-[#131B2A] text-slate-200 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+            disabled={exporting}
+            className="bg-[#0B101B] border border-[#1A2333] hover:bg-[#131B2A] text-slate-200 text-xs font-medium px-3.5 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export CSV</span>
+            {exporting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
           </button>
         </div>
       </div>

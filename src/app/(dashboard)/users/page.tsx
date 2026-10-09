@@ -33,25 +33,20 @@ export interface PlatformUserItem {
 export default function PlatformUsersPage() {
   const queryClient = useQueryClient();
 
-  // Search & Filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'All' | 'SUPER_ADMIN' | 'SUPPORT'>('All');
   const [statusFilter, setStatusFilter] = useState<'All' | 'ACTIVE' | 'DISABLED'>('All');
 
-  // Filter dropdown toggles
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
-  // Row context menu state
   const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
 
-  // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState<PlatformUserItem | null>(null);
   const [selectedUserForPasswordReset, setSelectedUserForPasswordReset] = useState<PlatformUserItem | null>(null);
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<PlatformUserItem | null>(null);
 
-  // Form states for Create User
   const [createForm, setCreateForm] = useState({
     name: '',
     email: '',
@@ -60,15 +55,12 @@ export default function PlatformUsersPage() {
   });
   const [createLoading, setCreateLoading] = useState(false);
 
-  // Form states for Edit Access
   const [editRoleForm, setEditRoleForm] = useState<'SUPER_ADMIN' | 'SUPPORT'>('SUPER_ADMIN');
   const [editLoading, setEditLoading] = useState(false);
 
-  // Password reset modal state
   const [newPasswordValue, setNewPasswordValue] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
 
-  // Toast feedback
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
   const showToast = (msg: string, isError = false) => {
@@ -76,7 +68,6 @@ export default function PlatformUsersPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       setOpenMenuUserId(null);
@@ -87,7 +78,6 @@ export default function PlatformUsersPage() {
     return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Fetch real platform users strictly from backend database
   const {
     data: serverData,
     isLoading,
@@ -105,7 +95,6 @@ export default function PlatformUsersPage() {
     staleTime: 10_000,
   });
 
-  // Map server items into PlatformUserItem objects (no fake mock data)
   const usersList = useMemo<PlatformUserItem[]>(() => {
     if (!serverData?.items) return [];
     return serverData.items.map((u) => ({
@@ -121,7 +110,6 @@ export default function PlatformUsersPage() {
     }));
   }, [serverData]);
 
-  // Filtered users calculation
   const filteredUsers = useMemo(() => {
     return usersList.filter((u) => {
       const matchesSearch =
@@ -136,7 +124,6 @@ export default function PlatformUsersPage() {
     });
   }, [usersList, searchQuery, roleFilter, statusFilter]);
 
-  // Generate strong random password
   const generatePassword = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
     let pass = '';
@@ -146,7 +133,6 @@ export default function PlatformUsersPage() {
     return pass;
   };
 
-  // Handle Create User directly via backend POST /api/platform/users
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (createForm.password.length < 12) {
@@ -176,7 +162,6 @@ export default function PlatformUsersPage() {
     }
   };
 
-  // Handle Edit Access via backend PATCH /api/platform/users/:id
   const handleSaveAccess = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForEdit) return;
@@ -197,7 +182,6 @@ export default function PlatformUsersPage() {
     }
   };
 
-  // Handle Toggle Disable/Enable via backend PATCH /api/platform/users/:id
   const handleToggleUserStatus = async (user: PlatformUserItem) => {
     const newStatus: UserStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
     try {
@@ -214,7 +198,6 @@ export default function PlatformUsersPage() {
     setOpenMenuUserId(null);
   };
 
-  // Handle Password Reset via backend POST /api/platform/users/:id/reset-password
   const handleApplyPasswordReset = async () => {
     if (!selectedUserForPasswordReset) return;
     if (newPasswordValue.length < 12) {
@@ -240,7 +223,6 @@ export default function PlatformUsersPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 pb-12">
-      {/* Toast Alert */}
       {toastMessage && (
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-2xl text-xs font-mono animate-in fade-in slide-in-from-bottom-2 duration-200 border ${toastMessage.isError
@@ -257,13 +239,12 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      {/* TOP HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-none">
+          <h1 className="text-[24px] sm:text-3xl font-bold text-[#F2F4F7] tracking-tight leading-none">
             Platform users
           </h1>
-          <p className="text-xs text-slate-400 font-normal mt-1.5 flex items-center gap-2">
+          <p className="text-[12px] text-[#626C79] font-normal mt-1.5 flex items-center gap-2">
             <span>
               {isLoading ? 'Loading users from database...' : `${usersList.length} people with access`}
             </span>
@@ -273,7 +254,6 @@ export default function PlatformUsersPage() {
           </p>
         </div>
 
-        {/* Create User Button */}
         <button
           type="button"
           onClick={() => {
@@ -285,16 +265,14 @@ export default function PlatformUsersPage() {
             });
             setIsCreateModalOpen(true);
           }}
-          className="bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold text-xs px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
+          className="bg-[#F59E0B] hover:bg-[#D97706] text-[#07090D] font-semibold text-[12px] px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
         >
-          <UserPlus className="w-4 h-4 text-black stroke-[2.2]" />
+          <UserPlus className="w-4 h-4 text-[#07090D] stroke-[2.2]" />
           <span>Create user</span>
         </button>
       </div>
 
-      {/* FILTER CONTROLS BAR */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Search input with rounded-lg */}
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
@@ -315,20 +293,17 @@ export default function PlatformUsersPage() {
           )}
         </div>
 
-        {/* Right dropdown filters & Refresh */}
         <div className="flex items-center gap-2">
-          {/* Refresh button */}
           <button
             type="button"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="bg-[#0B101B] border border-[#1A2333] hover:bg-[#131B2A] text-slate-400 hover:text-white p-2 rounded-lg transition-colors cursor-pointer"
+            className="bg-[#0B101B] border border-[#1A2333] hover:bg-[#131B2A] text-text-[#626C79] hover:text-white p-2 rounded-lg transition-colors cursor-pointer"
             title="Refresh list"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Role Filter Dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -364,7 +339,6 @@ export default function PlatformUsersPage() {
             )}
           </div>
 
-          {/* Status Filter Dropdown */}
           <div className="relative">
             <button
               type="button"
@@ -402,7 +376,6 @@ export default function PlatformUsersPage() {
         </div>
       </div>
 
-      {/* ERROR BANNER */}
       {isError && (
         <div className="p-4 bg-[#1C1215] border border-[#EF4444]/40 rounded-xl flex items-center justify-between text-xs text-[#EF4444]">
           <div className="flex items-center gap-2.5">
@@ -422,13 +395,11 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      {/* MAIN PLATFORM USERS TABLE */}
       <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            {/* Table Header */}
             <thead>
-              <tr className="border-b border-[#131A2B] text-[11px] font-mono text-slate-500 font-medium tracking-wider uppercase select-none">
+              <tr className="border-b border-[#131A2B] text-[10px] font-mono text-[#626C79] font-bold tracking-wider uppercase select-none">
                 <th className="py-3 px-5">USER</th>
                 <th className="py-3 px-5">ROLE</th>
                 <th className="py-3 px-5">STATUS</th>
@@ -437,10 +408,8 @@ export default function PlatformUsersPage() {
               </tr>
             </thead>
 
-            {/* Table Body */}
-            <tbody className="divide-y divide-[#131A2B] text-xs">
+            <tbody className="divide-y divide-[#131A2B] text-[13px]">
               {isLoading ? (
-                // SKELETON ROWS
                 Array.from({ length: 4 }).map((_, idx) => (
                   <tr key={`skel-${idx}`} className="animate-pulse">
                     <td className="py-4 px-5">
@@ -463,7 +432,7 @@ export default function PlatformUsersPage() {
                 ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-500 font-sans">
+                  <td colSpan={5} className="py-12 text-center text-[#626C79] font-sans">
                     {searchQuery || roleFilter !== 'All' || statusFilter !== 'All'
                       ? 'No platform users matching your filters.'
                       : 'No platform users found in database.'}
@@ -479,48 +448,42 @@ export default function PlatformUsersPage() {
                       className="hover:bg-[#101625]/60 transition-colors group cursor-pointer"
                       onClick={() => setSelectedUserForDetail(user)}
                     >
-                      {/* Column 1: USER (Name & Email) */}
                       <td className="py-4 px-5">
-                        <div className="font-semibold text-white group-hover:text-[#F59E0B] transition-colors leading-tight">
+                        <div className="font-semibold text-[#F2F4F7] group-hover:text-[#F59E0B] transition-colors leading-tight">
                           {user.name}
                         </div>
-                        <div className="font-mono text-[11px] text-slate-500 mt-0.5">
+                        <div className="font-mono text-[10px] text-[#626C79] mt-0.5">
                           {user.email}
                         </div>
                       </td>
 
-                      {/* Column 2: ROLE Badge */}
                       <td className="py-4 px-5">
                         {user.role === 'SUPER_ADMIN' ? (
-                          <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[11px] text-slate-300 border border-slate-700/60 bg-[#131A28]">
+                          <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[12px] text-[#F2F4F7] border border-[#1A2333]/60 bg-[#131A28]">
                             SUPER_ADMIN
                           </span>
                         ) : (
-                          <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[11px] font-semibold text-[#F59E0B] border border-[#B45309] bg-[#78350F]/40">
+                          <span className="inline-block px-2.5 py-0.5 rounded font-mono text-[12px] font-medium text-[#F59E0B] border border-[#B45309] bg-[#78350F]/40">
                             SUPPORT
                           </span>
                         )}
                       </td>
 
-                      {/* Column 3: STATUS Badge */}
                       <td className="py-4 px-5">
                         {user.status === 'ACTIVE' ? (
-                          <span className="inline-block px-2 py-0.5 rounded font-mono text-[11px] font-semibold text-[#10B981] border border-[#065F46] bg-[#064E3B]/40">
+                          <span className="inline-block px-2 py-0.5 rounded font-mono text-[12px] font-medium text-[#16A34A] border border-[#059669] bg-[#047857]/40">
                             ACTIVE
                           </span>
                         ) : (
-                          <span className="inline-block px-2 py-0.5 rounded font-mono text-[11px] font-semibold text-[#EF4444] border border-[#991B1B] bg-[#7F1D1D]/40">
+                          <span className="inline-block px-2 py-0.5 rounded font-mono text-[12px] font-medium text-[#DC2626] border border-[#B91C1C] bg-[#991B1B]/40">
                             DISABLED
                           </span>
                         )}
                       </td>
 
-                      {/* Column 4: LAST ACTIVE */}
-                      <td className="py-4 px-5 font-mono text-slate-400 text-xs">
+                      <td className="py-4 px-5 font-mono text-text-[#626C79] text-xs">
                         {user.lastActive}
                       </td>
-
-                      {/* Column 5: Action Menu (3 Dots) */}
                       <td
                         className="py-4 px-5 text-right relative"
                         onClick={(e) => e.stopPropagation()}
@@ -533,14 +496,13 @@ export default function PlatformUsersPage() {
                           }}
                           className={`w-7 h-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer ${isMenuOpen
                             ? 'bg-[#1C2638] text-white'
-                            : 'text-slate-400 hover:text-white hover:bg-[#131A28]'
+                            : 'text-text-[#626C79] hover:text-white hover:bg-[#131A28]'
                             }`}
                           title="User actions"
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
 
-                        {/* Action Dropdown Menu matching console design */}
                         {isMenuOpen && (
                           <div
                             className="absolute right-5 mt-1 w-44 bg-[#0B101B] border border-[#222E42] rounded-lg shadow-2xl py-1 z-40 text-left text-xs font-sans animate-in fade-in zoom-in-95 duration-100"
@@ -591,14 +553,10 @@ export default function PlatformUsersPage() {
         </div>
       </div>
 
-      {/* FOOTER AUDIT NOTE */}
       <div className="text-xs text-slate-500 font-sans pl-1">
         Showing {filteredUsers.length} of {usersList.length} platform users · Access changes are recorded in the audit log.
       </div>
 
-      {/* ======================================================== */}
-      {/* MODAL 1: CREATE USER MODAL */}
-      {/* ======================================================== */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -610,7 +568,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                className="text-text-[#626C79] hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -689,7 +647,7 @@ export default function PlatformUsersPage() {
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                  className="px-4 py-2 bg-[#F59E0B] hover:bg-[#D97706] text-[#07090D] font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {createLoading ? 'Creating in DB…' : 'Create User'}
                 </button>
@@ -699,9 +657,6 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 2: EDIT ACCESS (ROLE) */}
-      {/* ======================================================== */}
       {selectedUserForEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -713,7 +668,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForEdit(null)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                className="text-text-[#626C79] hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -721,7 +676,7 @@ export default function PlatformUsersPage() {
 
             <form onSubmit={handleSaveAccess} className="space-y-4 text-xs">
               <div>
-                <span className="text-slate-400">User</span>
+                <span className="text-text-[#626C79]">User</span>
                 <div className="font-semibold text-white text-sm mt-0.5">
                   {selectedUserForEdit.name}
                 </div>
@@ -744,7 +699,7 @@ export default function PlatformUsersPage() {
                     />
                     <div>
                       <div className="font-semibold text-white">SUPER_ADMIN</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-text-[#626C79] mt-0.5">
                         Unrestricted platform access: create orgs, edit billing plans, manage platform staff, and audit system events.
                       </div>
                     </div>
@@ -761,7 +716,7 @@ export default function PlatformUsersPage() {
                     />
                     <div>
                       <div className="font-semibold text-white">SUPPORT</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-text-[#626C79] mt-0.5">
                         Read-only tenant investigations, viewing organization telemetry, and diagnostic logs. Cannot mutate tenant state.
                       </div>
                     </div>
@@ -790,9 +745,6 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* MODAL 3: RESET PASSWORD */}
-      {/* ======================================================== */}
       {selectedUserForPasswordReset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -804,7 +756,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForPasswordReset(null)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                className="text-text-[#626C79] hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -869,9 +821,6 @@ export default function PlatformUsersPage() {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* DRAWER / MODAL 4: USER DETAILS INSPECTOR */}
-      {/* ======================================================== */}
       {selectedUserForDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-[#0B101B] border border-[#222E42] rounded-xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
@@ -884,7 +833,7 @@ export default function PlatformUsersPage() {
                   <h3 className="text-base font-semibold text-white leading-tight">
                     {selectedUserForDetail.name}
                   </h3>
-                  <span className="font-mono text-xs text-slate-400">
+                  <span className="font-mono text-xs text-text-[#626C79]">
                     {selectedUserForDetail.email}
                   </span>
                 </div>
@@ -892,7 +841,7 @@ export default function PlatformUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUserForDetail(null)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                className="text-text-[#626C79] hover:text-white p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -900,7 +849,7 @@ export default function PlatformUsersPage() {
 
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                <span className="text-slate-400">User ID</span>
+                <span className="text-text-[#626C79]">User ID</span>
                 <span className="font-mono text-[11px] text-slate-300 flex items-center gap-2">
                   <span>{selectedUserForDetail.id}</span>
                   <button
@@ -918,7 +867,7 @@ export default function PlatformUsersPage() {
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                <span className="text-slate-400">Status</span>
+                <span className="text-text-[#626C79]">Status</span>
                 <span
                   className={`font-mono px-2 py-0.5 rounded text-[11px] font-semibold ${selectedUserForDetail.status === 'ACTIVE'
                     ? 'text-[#10B981] bg-[#064E3B]/40 border border-[#065F46]'
@@ -930,14 +879,14 @@ export default function PlatformUsersPage() {
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                <span className="text-slate-400">Role</span>
+                <span className="text-text-[#626C79]">Role</span>
                 <span className="font-mono text-slate-200">
                   {selectedUserForDetail.role}
                 </span>
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                <span className="text-slate-400">Last Active Session</span>
+                <span className="text-text-[#626C79]">Last Active Session</span>
                 <span className="font-mono text-slate-300">
                   {selectedUserForDetail.lastActive}
                 </span>
@@ -945,15 +894,15 @@ export default function PlatformUsersPage() {
 
               {selectedUserForDetail.createdAt && (
                 <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                  <span className="text-slate-400">Account Created</span>
-                  <span className="font-mono text-slate-400">
+                  <span className="text-text-[#626C79]">Account Created</span>
+                  <span className="font-mono text-text-[#626C79]">
                     {new Date(selectedUserForDetail.createdAt).toISOString().replace('T', ' ').slice(0, 16)}
                   </span>
                 </div>
               )}
 
               <div className="flex items-center justify-between py-2 border-b border-[#131A2B]">
-                <span className="text-slate-400">MFA / 2FA Status</span>
+                <span className="text-text-[#626C79]">MFA / 2FA Status</span>
                 <span className="font-mono text-[#10B981]">
                   Enforced (Hardware TOTP)
                 </span>
