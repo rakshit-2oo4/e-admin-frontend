@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { MoreHorizontal, ArrowRight } from 'lucide-react';
 
@@ -42,6 +42,8 @@ interface RecentOrg {
 }
 
 export default function OverviewPage() {
+  const queryClient = useQueryClient();
+
   const { data: stats } = useQuery<OverviewStats>({
     queryKey: ['overview-stats'],
     queryFn: () => api<OverviewStats>('/stats/overview').catch(() => null as any),
@@ -61,6 +63,54 @@ export default function OverviewPage() {
   });
 
   const [activeMenuOrgId, setActiveMenuOrgId] = useState<string | null>(null);
+
+  const handleToggleSuspend = async (org: RecentOrg) => {
+    try {
+      if (org.status === 'Suspended') {
+        await api(`/orgs/${org.id}/unsuspend`, { method: 'POST' });
+      } else {
+        await api(`/orgs/${org.id}/suspend`, {
+          method: 'POST',
+          body: { reason: 'Administrative suspension via platform console' },
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['overview-recent-orgs'] });
+      queryClient.invalidateQueries({ queryKey: ['overview-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['overview-recent-activity'] });
+    } catch (err) {
+      console.error('Failed to toggle suspension:', err);
+    } finally {
+      setActiveMenuOrgId(null);
+    }
+  };
+
+  const handleImpersonate = async (orgId: string) => {
+    try {
+      let targetUserId: string | undefined;
+      try {
+        const usersRes = await api<{ items: { id: string; isActive?: boolean }[] }>(`/orgs/${orgId}/users`, {
+          query: { page: 1, limit: 1 },
+        });
+        targetUserId = usersRes.items?.find((u) => u.isActive)?.id ?? usersRes.items?.[0]?.id;
+      } catch {
+        // proceed if users fetch is not available
+      }
+
+      await api('/impersonate', {
+        method: 'POST',
+        body: {
+          orgId,
+          ...(targetUserId ? { targetUserId } : {}),
+          reason: 'Administrative impersonation via platform console',
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ['overview-recent-activity'] });
+    } catch (err) {
+      console.error('Failed to impersonate:', err);
+    } finally {
+      setActiveMenuOrgId(null);
+    }
+  };
 
   const Sparkline = () => (
     <svg className="w-20 h-7 overflow-visible" viewBox="0 0 80 28" fill="none">
@@ -365,12 +415,14 @@ export default function OverviewPage() {
                             </Link>
                             <button
                               type="button"
+                              onClick={() => handleImpersonate(org.id)}
                               className="w-full text-left px-3 py-1.5 text-xs text-[#CBD5E1] hover:bg-[#172033] hover:text-white rounded"
                             >
                               Impersonate
                             </button>
                             <button
                               type="button"
+                              onClick={() => handleToggleSuspend(org)}
                               className="w-full text-left px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#172033] rounded"
                             >
                               {org.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
