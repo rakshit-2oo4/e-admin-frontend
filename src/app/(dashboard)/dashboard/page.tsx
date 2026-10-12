@@ -5,6 +5,22 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { MoreHorizontal, ArrowRight } from 'lucide-react';
 
+interface ActivityItem {
+  id: string;
+  type: 'user' | 'system';
+  initials: string;
+  title: string;
+  createdAt: string;
+}
+
+const timeAgo = (iso: string) => {
+  const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+};
+
 interface OverviewStats {
   totalOrgs: number;
   activeOrgs: number;
@@ -32,7 +48,19 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
-  const [activeMenuOrgId, setActiveMenuOrgId] = useState<string | null>('zenith-labs');
+  const { data: orgs = [] } = useQuery<RecentOrg[]>({
+    queryKey: ['overview-recent-orgs'],
+    queryFn: () => api<RecentOrg[]>('/orgs/recent').catch(() => []),
+    staleTime: 30_000,
+  });
+
+  const { data: activities = [] } = useQuery<ActivityItem[]>({
+    queryKey: ['overview-recent-activity'],
+    queryFn: () => api<ActivityItem[]>('/activity/recent').catch(() => []),
+    staleTime: 30_000,
+  });
+
+  const [activeMenuOrgId, setActiveMenuOrgId] = useState<string | null>(null);
 
   const Sparkline = () => (
     <svg className="w-20 h-7 overflow-visible" viewBox="0 0 80 28" fill="none">
@@ -69,93 +97,6 @@ export default function OverviewPage() {
     { name: 'Redis', status: 'Operational', color: 'emerald' },
     { name: 'Postgres', status: 'Operational', color: 'emerald' },
     { name: 'S3 storage', status: 'Degraded', color: 'amber' },
-  ];
-
-  const sampleOrgs: RecentOrg[] = [
-    {
-      id: 'northwind',
-      name: 'Northwind Research',
-      slug: 'northwind',
-      plan: 'Enterprise',
-      users: 182,
-      attempts: 4281,
-      status: 'Active',
-    },
-    {
-      id: 'acme-univ',
-      name: 'Acme University',
-      slug: 'acme-univ',
-      plan: 'Scale',
-      users: 96,
-      attempts: 2840,
-      status: 'Active',
-    },
-    {
-      id: 'zenith-labs',
-      name: 'Zenith Labs',
-      slug: 'zenith-labs',
-      plan: 'Team',
-      users: 44,
-      attempts: 921,
-      status: 'Suspended',
-    },
-    {
-      id: 'atlas-acad',
-      name: 'Atlas Academy',
-      slug: 'atlas-acad',
-      plan: 'Scale',
-      users: 128,
-      attempts: 1836,
-      status: 'Active',
-    },
-    {
-      id: 'pinecone',
-      name: 'Pinecone College',
-      slug: 'pinecone',
-      plan: 'Team',
-      users: 31,
-      attempts: 640,
-      status: 'Active',
-    },
-  ];
-
-  const activities = [
-    {
-      initials: 'AS',
-      type: 'user',
-      title: "Suspended org 'Zenith Labs'",
-      time: '2m ago',
-    },
-    {
-      initials: 'MR',
-      type: 'user',
-      title: "Created org 'Northwind'",
-      time: '14m ago',
-    },
-    {
-      initials: 'AS',
-      type: 'user',
-      title: "Started impersonation of 'Acme'",
-      time: '1h ago',
-    },
-    {
-      initials: 'SYS',
-      type: 'system',
-      title: "system · Auto-expired impersonation 'Acme'",
-      time: '2h ago',
-    },
-    {
-      initials: 'JL',
-      type: 'user',
-      title: "Changed plan for 'Atlas'",
-      time: '3h ago',
-    },
-    {
-      initials: 'MR',
-      type: 'user',
-      title: "Invited platform user 'Dana'",
-      time: '5h ago',
-    },
   ];
 
   return (
@@ -365,7 +306,12 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#131A2B]">
-                {sampleOrgs.map((org) => {
+                {orgs.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-[#64748B]">No organizations yet</td>
+                  </tr>
+                )}
+                {orgs.map((org) => {
                   const isMenuOpen = activeMenuOrgId === org.id;
 
                   return (
@@ -379,7 +325,7 @@ export default function OverviewPage() {
                       <td className="py-3.5 font-mono text-[#8B98A9]">
                         {org.slug}
                       </td>
-                      <td className="py-3.5 text-[#94A3B8]">
+                      <td className="py-3.5 text-[#94A3B8] capitalize">
                         {org.plan}
                       </td>
                       <td className="py-3.5 font-mono text-[#CBD5E1]">
@@ -447,8 +393,11 @@ export default function OverviewPage() {
             </h2>
 
             <div className="space-y-4">
-              {activities.map((act, index) => (
-                <div key={index} className="flex items-center justify-between text-[10px] gap-3">
+              {activities.length === 0 && (
+                <p className="text-[10px] text-[#64748B]">No activity yet</p>
+              )}
+              {activities.map((act) => (
+                <div key={act.id} className="flex items-center justify-between text-[10px] gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-6 h-6 rounded-full text-[10px] font-semibold flex items-center justify-center shrink-0 ${act.type === 'system'
@@ -465,7 +414,7 @@ export default function OverviewPage() {
                   </div>
 
                   <span className="text-[11px] font-mono text-[#64748B] shrink-0">
-                    {act.time}
+                    {timeAgo(act.createdAt)}
                   </span>
                 </div>
               ))}
