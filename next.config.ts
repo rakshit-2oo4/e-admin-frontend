@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/platform/:path*',
-        destination: `${process.env.BACKEND_URL}/api/platform/:path*`,
+        destination: `${(process.env.BACKEND_URL || 'https://e-admin-backend-swqf.onrender.com').replace(/\/+$/, '')}/api/platform/:path*`
       },
     ];
   },
