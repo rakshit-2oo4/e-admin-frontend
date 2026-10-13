@@ -1,6 +1,8 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { Bell, Command } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, Search } from 'lucide-react';
+import { CommandPalette } from './CommandPalette';
 
 interface NavbarProps {
   currentSection?: string;
@@ -9,6 +11,18 @@ interface NavbarProps {
 
 export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
   const pathname = usePathname();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const getBreadcrumb = () => {
     if (currentSection) return currentSection.toUpperCase();
@@ -45,22 +59,21 @@ export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
         </div>
       </div>
 
-      {/* Right: Meta Status, Version & Quick Controls */}
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-[330px] h-8 items-center gap-2 px-3 rounded-md border border-[#1F2A3F] bg-[#0B111C] hover:border-[#2A3550] transition-colors text-left"
+      >
+        <Search className="w-3.5 h-3.5 text-[#8F9CAE]" />
+        <span className="flex-1 text-xs text-[#64748B]">Search or jump to...</span>
+        <kbd className="px-1.5 py-0.5 rounded border border-[#2A3550] bg-[#151D2C] text-[10px] font-mono text-[#8F9CAE]">⌘K</kbd>
+      </button>
+
       <div className="flex items-center gap-4 text-[#8F9CAE]">
         <div className="text-xs font-mono tracking-wider text-[#64748B] hidden sm:block">
           UTC · {version}
         </div>
 
-        {/* Command shortcut icon */}
-        <button
-          type="button"
-          title="Command Palette"
-          className="w-7 h-7 rounded flex items-center justify-center hover:bg-[#151D2C] hover:text-white transition-colors text-[#8F9CAE]"
-        >
-          <Command className="w-4 h-4" />
-        </button>
-
-        {/* Notification Bell */}
         <button
           type="button"
           title="Notifications"
@@ -70,6 +83,7 @@ export function Navbar({ currentSection, version = 'v2.18.4' }: NavbarProps) {
           <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#F59E0B] rounded-full" />
         </button>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>
   );
 }
