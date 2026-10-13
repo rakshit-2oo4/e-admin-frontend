@@ -19,12 +19,12 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
-  const [fullName, setFullName] = useState(user?.name || 'Alex Kim');
-  const [email] = useState(user?.email || 'alex.kim@ebenchcampus.com');
-  const [role] = useState(user?.role || 'PLATFORM_OWNER');
+  const [fullName, setFullName] = useState(user?.name || 'Unknown');
+  const [email] = useState(user?.email || '_');
+  const [role] = useState(user?.role || '_');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  const [avatarInitials, setAvatarInitials] = useState('AK');
+  const [avatarInitials, setAvatarInitials] = useState('_');
 
   useEffect(() => {
     if (fullName) {
