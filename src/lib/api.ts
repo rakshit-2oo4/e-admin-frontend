@@ -7,37 +7,52 @@ export class ApiError extends Error {
     constructor(public status: number, public code: string, message: string) { super(message); }
 }
 
+const getBaseUrl = () => {
+    const envUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (envUrl) {
+        return `${envUrl.replace(/\/+$/, '')}/api/platform`;
+    }
+    return '/api/platform';
+};
+
 async function doRefresh(): Promise<string | null> {
-    const res = await fetch('/api/platform/auth/refresh', { method: 'POST', credentials: 'include' });
+    const res = await fetch(`${getBaseUrl()}/auth/refresh`, { method: 'POST', credentials: 'include' });
     const json = await res.json().catch(() => null);
     accessToken = res.ok && json?.ok ? json.data.accessToken : null;
     return accessToken;
 }
-async function refreshWithLock(): Promise<string | null> {
-    if (typeof navigator !== 'undefined' && navigator.locks) {
-        return await navigator.locks.request('platform-refresh', async () => doRefresh());
-    }
-    return doRefresh();
-}
 
 export function refreshAccessToken(): Promise<string | null> {
     if (!inflight) {
-        inflight = refreshWithLock().finally(() => {
+        inflight = doRefresh().finally(() => {
             inflight = null;
         });
     }
+
     return inflight;
 }
-type Opts = { method?: string; body?: unknown; query?: Record<string, string | number | undefined> };
+type Opts = {
+    method?: string;
+    body?: unknown;
+    query?: Record<string, string | number | boolean | undefined>;
+    signal?: AbortSignal;
+};
 
-export async function api<T>(path: string, { method = 'GET', body, query }: Opts = {}): Promise<T> {
+export async function api<T>(path: string, { method = 'GET', body, query, signal }: Opts = {}): Promise<T> {
     const qs = query
         ? '?' + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])).toString()
         : '';
+
+    const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/refresh');
+    if (!accessToken && !isAuthRoute) {
+        await refreshAccessToken();
+    }
+
     const call = () =>
-        fetch(`/api/platform${path}${qs}`, {
+        fetch(`${getBaseUrl()}${path}${qs}`, {
             method,
             credentials: 'include',
+            signal,
             headers: {
                 ...(body ? { 'Content-Type': 'application/json' } : {}),
                 ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -46,8 +61,9 @@ export async function api<T>(path: string, { method = 'GET', body, query }: Opts
         });
 
     let res = await call();
-    const isAuthRoute = path.startsWith('/auth/login') || path.startsWith('/auth/refresh');
-    if (res.status === 401 && !isAuthRoute && (await refreshAccessToken())) res = await call();
+    if (res.status === 401 && !isAuthRoute && (await refreshAccessToken())) {
+        res = await call();
+    }
 
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.ok) {
@@ -64,7 +80,7 @@ export async function downloadFile(
         ? '?' + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)])).toString()
         : '';
     const call = () =>
-        fetch(`/api/platform${path}${qs}`, {
+        fetch(`${getBaseUrl()}${path}${qs}`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -72,6 +88,9 @@ export async function downloadFile(
             },
         });
 
+    if (!accessToken) {
+        await refreshAccessToken();
+    }
     let res = await call();
     if (res.status === 401 && (await refreshAccessToken())) {
         res = await call();
@@ -100,4 +119,4 @@ export async function downloadFile(
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+}
