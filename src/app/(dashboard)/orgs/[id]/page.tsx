@@ -47,7 +47,6 @@ function Sparkline({
   );
 }
 
-// Sparkline SVG path definitions matching the Figma design curves
 const SPARKLINES = {
   attempts: 'M 2,21 Q 22,23 42,13 T 72,10 T 98,6',
   seats: 'M 2,20 Q 24,19 46,22 T 74,13 T 98,9',
@@ -88,136 +87,16 @@ interface OrgDetailData {
   }>;
 }
 
-// Default fallback data directly mirroring the Acme Corp Figma design
-const DEFAULT_ACME_DATA: OrgDetailData = {
-  id: 'acme-corp',
-  name: 'Acme Corp',
-  slug: 'acme',
-  status: 'Active',
-  orgCode: 'ORG_01JGAT7N6H9',
-  createdDate: '2026-06-14',
-  createdAgo: '2 months ago',
-  createdBy: 'Akshay Sharma',
-  createdByType: 'platform',
-  plan: 'Starter',
-  trialLength: '180 days',
-  primaryDomain: 'acme.com',
-  primaryContact: 'Jane Founder',
-  contactEmail: 'admin@acme.test',
-  candidateAttempts: 1284,
-  attemptsLimit: 2000,
-  activeSeats: 38,
-  seatsLimit: 50,
-  storageGB: 41.8,
-  storageLimitGB: 50,
-  apiRequests: '93.4k',
-  apiGrowth: '+12.4%',
-  recentActivity: [
-    {
-      id: '1',
-      title: 'Organization profile updated',
-      actor: 'Akshay Sharma',
-      actorType: 'platform',
-      timestamp: '2026-10-05 11:42',
-      stripeColor: 'slate',
-    },
-    {
-      id: '2',
-      title: 'Trial extended by 30 days',
-      actor: 'Mira Chen',
-      actorType: 'platform',
-      timestamp: '2026-10-03 16:08',
-      stripeColor: 'amber',
-    },
-    {
-      id: '3',
-      title: 'Jane Founder invited as administrator',
-      actor: 'Akshay Sharma',
-      actorType: 'platform',
-      timestamp: '2026-09-21 09:14',
-      stripeColor: 'slate',
-    },
-    {
-      id: '4',
-      title: 'SSO domain acme.com verified',
-      actor: 'System',
-      actorType: '',
-      timestamp: '2026-09-17 18:32',
-      stripeColor: 'slate',
-    },
-    {
-      id: '5',
-      title: 'Organization created',
-      actor: 'Akshay Sharma',
-      actorType: 'platform',
-      timestamp: '2026-06-14 08:05',
-      stripeColor: 'slate',
-    },
-  ],
-};
-
-// Known org mock mapping for demo previews when navigating from the orgs table
-const ORG_MOCKS: Record<string, Partial<OrgDetailData>> = {
-  'acme-univ': {
-    name: 'Acme University',
-    slug: 'acme-univ',
-    plan: 'Scale',
-    activeSeats: 96,
-    candidateAttempts: 2840,
-    storageGB: 184,
-    status: 'Active',
-    primaryDomain: 'acme.edu',
-    primaryContact: 'Prof. Miller',
-    contactEmail: 'admin@acme.edu',
-  },
-  northwind: {
-    name: 'Northwind Research',
-    slug: 'northwind',
-    plan: 'Enterprise',
-    activeSeats: 182,
-    candidateAttempts: 4281,
-    storageGB: 412,
-    status: 'Active',
-    primaryDomain: 'northwind.org',
-    primaryContact: 'Sarah Vance',
-    contactEmail: 'contact@northwind.org',
-  },
-  'zenith-labs': {
-    name: 'Zenith Labs',
-    slug: 'zenith-labs',
-    plan: 'Team',
-    activeSeats: 44,
-    candidateAttempts: 921,
-    storageGB: 68,
-    status: 'Suspended',
-    primaryDomain: 'zenithlabs.io',
-    primaryContact: 'David Cole',
-    contactEmail: 'ops@zenithlabs.io',
-  },
-  'atlas-acad': {
-    name: 'Atlas Academy',
-    slug: 'atlas-acad',
-    plan: 'Scale',
-    activeSeats: 128,
-    candidateAttempts: 1836,
-    storageGB: 206,
-    status: 'Active',
-    primaryDomain: 'atlasacademy.edu',
-    primaryContact: 'Dean Evans',
-    contactEmail: 'dean@atlasacademy.edu',
-  },
-  pinecone: {
-    name: 'Pinecone College',
-    slug: 'pinecone',
-    plan: 'Team',
-    activeSeats: 31,
-    candidateAttempts: 640,
-    storageGB: 42,
-    status: 'Active',
-    primaryDomain: 'pinecone.edu',
-    primaryContact: 'Rachel Zane',
-    contactEmail: 'admin@pinecone.edu',
-  },
+const timeAgo = (iso?: string | null) => {
+  if (!iso) return '—';
+  const s = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  const days = Math.floor(s / 86400);
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 };
 
 type TabKey = 'overview' | 'people' | 'subscriptions' | 'usage' | 'audit';
@@ -245,8 +124,8 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Fetch real org detail from backend if available
-  const { data: serverOrg, refetch } = useQuery({
+  // Fetch real org detail from backend
+  const { data: serverOrg, isLoading: isOrgLoading, refetch } = useQuery({
     queryKey: ['platform-org-detail', id],
     queryFn: async () => {
       try {
@@ -258,51 +137,129 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
     retry: false,
   });
 
-  // Fetch tenant users if 'people' tab is selected
+  // Fetch tenant users
   const { data: usersData } = useQuery({
     queryKey: ['platform-org-users', id],
     queryFn: async () => {
       try {
-        return await api<{ items: any[]; total: number }>(`/orgs/${id}/users?page=1&limit=20`);
+        return await api<{ items: any[]; total: number }>(`/orgs/${id}/users?page=1&limit=50`);
       } catch {
-        return null;
+        return { items: [], total: 0 };
       }
     },
-    enabled: activeTab === 'people',
+    enabled: !!id,
   });
 
-  // Merge server data with fallback data
-  const org: OrgDetailData = useMemo(() => {
-    const base = { ...DEFAULT_ACME_DATA };
-    const mockOverride = ORG_MOCKS[id] || {};
+  // Fetch audit logs related to this organization
+  const { data: auditData } = useQuery({
+    queryKey: ['platform-audit-logs-org', id],
+    queryFn: async () => {
+      try {
+        return await api<{ items: any[]; total?: number }>('/audit', {
+          query: { search: id, limit: 25 },
+        });
+      } catch {
+        return { items: [] };
+      }
+    },
+    enabled: !!id,
+    staleTime: 15_000,
+  });
 
-    if (serverOrg) {
-      const isSuspended = !!serverOrg.suspendedAt;
-      const isDeleted = !!serverOrg.deletedAt;
-      return {
-        ...base,
-        id: serverOrg.id,
-        name: serverOrg.name,
-        slug: serverOrg.slug,
-        status: isDeleted ? 'Deleted' : isSuspended ? 'Suspended' : 'Active',
-        orgCode: `ORG_${serverOrg.id.slice(0, 10).toUpperCase()}`,
-        plan: serverOrg.plan ? serverOrg.plan.charAt(0).toUpperCase() + serverOrg.plan.slice(1) : base.plan,
-        createdDate: serverOrg.createdAt ? new Date(serverOrg.createdAt).toISOString().split('T')[0] : base.createdDate,
-        candidateAttempts: serverOrg.usage?.attemptsTotal ?? base.candidateAttempts,
-        activeSeats: serverOrg.usage?.userCount ?? base.activeSeats,
-        storageGB: serverOrg.usage?.storageBytes ? +(serverOrg.usage.storageBytes / (1024 * 1024 * 1024)).toFixed(1) : base.storageGB,
-      };
-    }
+  const org: OrgDetailData = useMemo(() => {
+    const isSuspended = !!serverOrg?.suspendedAt;
+    const isDeleted = !!serverOrg?.deletedAt;
+    const name = serverOrg?.name ?? (isOrgLoading ? 'Loading…' : 'Organization');
+    const slug = serverOrg?.slug ?? id;
+    const plan = serverOrg?.plan
+      ? serverOrg.plan.charAt(0).toUpperCase() + serverOrg.plan.slice(1)
+      : 'Trial';
+
+    const ownerUser = usersData?.items?.find((u: any) => u.role === 'OWNER') || usersData?.items?.[0];
+    const primaryContact = ownerUser?.name || (ownerUser?.email ? ownerUser.email.split('@')[0] : '—');
+    const contactEmail = ownerUser?.email || '—';
+    const primaryDomain = ownerUser?.email?.includes('@')
+      ? ownerUser.email.split('@')[1]
+      : serverOrg?.slug
+        ? `${serverOrg.slug}.proctor.internal`
+        : '—';
+
+    const candidateAttempts = serverOrg?.usage?.attemptsTotal ?? 0;
+    const attemptsLimit =
+      plan.toLowerCase() === 'enterprise' ? 100000 : plan.toLowerCase() === 'scale' ? 20000 : plan.toLowerCase() === 'team' ? 5000 : 2000;
+    const activeSeats = serverOrg?.usage?.userCount ?? (usersData?.total ?? 0);
+    const seatsLimit =
+      plan.toLowerCase() === 'enterprise' ? 1000 : plan.toLowerCase() === 'scale' ? 200 : plan.toLowerCase() === 'team' ? 50 : 25;
+    const storageGB = serverOrg?.usage?.storageBytes
+      ? +(serverOrg.usage.storageBytes / (1024 * 1024 * 1024)).toFixed(1)
+      : 0;
+    const storageLimitGB = 50;
+
+    const trialLength = serverOrg?.trialEndsAt
+      ? `${Math.max(0, Math.round((new Date(serverOrg.trialEndsAt).getTime() - new Date(serverOrg.createdAt).getTime()) / (1000 * 60 * 60 * 24)))} days`
+      : `${serverOrg?.retentionDays ?? 90} days retention`;
+
+    const createdDate = serverOrg?.createdAt
+      ? new Date(serverOrg.createdAt).toISOString().split('T')[0]
+      : '—';
+    const createdAgo = serverOrg?.createdAt ? timeAgo(serverOrg.createdAt) : '—';
+    const createdBy = serverOrg?.createdByPlatformUserId ? 'Platform Admin' : 'System';
 
     return {
-      ...base,
-      ...mockOverride,
-      id: id || base.id,
-      orgCode: id.startsWith('acme') ? 'ORG_01JGAT7N6H9' : `ORG_${id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 11).toUpperCase()}`,
+      id: serverOrg?.id ?? id,
+      name,
+      slug,
+      status: isDeleted ? 'Deleted' : isSuspended ? 'Suspended' : 'Active',
+      orgCode: serverOrg?.id ? `ORG_${serverOrg.id.replace(/-/g, '').slice(0, 11).toUpperCase()}` : '—',
+      createdDate,
+      createdAgo,
+      createdBy,
+      createdByType: 'platform',
+      plan,
+      trialLength,
+      primaryDomain,
+      primaryContact,
+      contactEmail,
+      candidateAttempts,
+      attemptsLimit,
+      activeSeats,
+      seatsLimit,
+      storageGB,
+      storageLimitGB,
+      apiRequests: `${serverOrg?.usage?.attemptsLast30Days ?? 0}`,
+      apiGrowth: 'last 30d',
+      recentActivity: [],
     };
-  }, [id, serverOrg]);
+  }, [id, serverOrg, isOrgLoading, usersData]);
 
-  // Form states for Edit Organization
+  const recentActivities = useMemo(() => {
+    if (!auditData?.items?.length) return [];
+    return auditData.items.slice(0, 5).map((act: any) => {
+      let title = act.action ? act.action.replace(/_/g, ' ').toLowerCase() : 'Audit event';
+      if (act.action === 'ORG_CREATED') title = 'Organization created';
+      else if (act.action === 'ORG_UPDATED') title = 'Organization profile updated';
+      else if (act.action === 'ORG_SUSPENDED') title = 'Organization suspended';
+      else if (act.action === 'ORG_UNSUSPENDED') title = 'Organization reinstated';
+      else if (act.action === 'ORG_DELETED') title = 'Organization scheduled for deletion';
+      else if (act.action === 'IMPERSONATION_STARTED') title = 'Tenant impersonation session started';
+      else if (act.action === 'IMPERSONATION_ENDED') title = 'Tenant impersonation session ended';
+
+      const actor = act.actor?.name || act.actor?.email || (act.type === 'SYSTEM' ? 'System' : 'Platform User');
+      const actorType = act.type === 'SYSTEM' ? '' : 'platform';
+      const stripeColor = String(act.action).includes('SUSPEND') || String(act.action).includes('TRIAL') ? 'amber' : 'slate';
+      const timestamp = act.createdAt ? new Date(act.createdAt).toISOString().replace('T', ' ').slice(0, 16) : '—';
+
+      return {
+        id: act.id,
+        title,
+        actor,
+        actorType,
+        timestamp,
+        stripeColor: stripeColor as 'amber' | 'slate',
+      };
+    });
+  }, [auditData]);
+
   const [editForm, setEditForm] = useState({
     name: org.name,
     plan: org.plan,
@@ -311,21 +268,17 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
     trialLength: org.trialLength,
   });
 
-  // Impersonate state
   const [impersonateReason, setImpersonateReason] = useState('');
   const [impersonateTargetUser, setImpersonateTargetUser] = useState(org.contactEmail);
   const [impersonateLoading, setImpersonateLoading] = useState(false);
   const [impersonateTokenResult, setImpersonateTokenResult] = useState<{ token: string; expiresAt: string } | null>(null);
 
-  // Suspend state
   const [suspendReason, setSuspendReason] = useState('');
   const [suspendLoading, setSuspendLoading] = useState(false);
 
-  // Delete state
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Sync edit form with current org data
   useEffect(() => {
     setEditForm({
       name: org.name,
@@ -337,7 +290,6 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
     setImpersonateTargetUser(org.contactEmail);
   }, [org]);
 
-  // Handle Edit Save
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -350,9 +302,9 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
       });
       showToast('Organization settings updated successfully');
       refetch();
-    } catch {
-      // Local preview fallback
-      showToast('Organization settings saved (local preview)');
+      queryClient.invalidateQueries({ queryKey: ['platform-audit-logs-org', id] });
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update organization');
     }
     setIsEditModalOpen(false);
   };
@@ -366,22 +318,22 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
     }
     setImpersonateLoading(true);
     try {
+      const targetUser = usersData?.items?.find((u: any) => u.email === impersonateTargetUser || u.id === impersonateTargetUser) ?? usersData?.items?.[0];
+      const targetUserId = targetUser?.id;
+
       const res = await api<{ token: string; expiresAt: string }>(`/impersonate`, {
         method: 'POST',
         body: {
           orgId: org.id,
+          ...(targetUserId ? { targetUserId } : {}),
           reason: impersonateReason,
         },
       });
       setImpersonateTokenResult(res);
       showToast('Read-only tenant impersonation session created');
-    } catch {
-      // Mock result if backend endpoint unavailable
-      setImpersonateTokenResult({
-        token: `eyJimpersonation_${Math.random().toString(36).slice(2, 10)}_readonly`,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      });
-      showToast('Read-only tenant impersonation session created');
+      queryClient.invalidateQueries({ queryKey: ['platform-audit-logs-org', id] });
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to authorize impersonation session');
     } finally {
       setImpersonateLoading(false);
     }
@@ -402,8 +354,9 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
         showToast('Organization suspended successfully');
       }
       refetch();
-    } catch {
-      showToast(org.status === 'Suspended' ? 'Organization reinstated (local)' : 'Organization suspended (local)');
+      queryClient.invalidateQueries({ queryKey: ['platform-audit-logs-org', id] });
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update organization status');
     } finally {
       setSuspendLoading(false);
       setIsSuspendModalOpen(false);
@@ -421,9 +374,8 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
       await api(`/orgs/${org.id}`, { method: 'DELETE' });
       showToast('Organization scheduled for 90-day retention deletion');
       router.push('/orgs');
-    } catch {
-      showToast('Organization deleted (local)');
-      router.push('/orgs');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to delete organization');
     } finally {
       setDeleteLoading(false);
       setIsDeleteModalOpen(false);
@@ -732,29 +684,35 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
               </div>
 
               <div className="divide-y divide-[#131A2B]">
-                {org.recentActivity.map((act) => (
-                  <div key={act.id} className="py-3.5 flex items-center justify-between">
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`w-1 h-9 rounded-full flex-shrink-0 mt-0.5 ${act.stripeColor === 'amber' ? 'bg-[#F59E0B]' : 'bg-[#334155]'
-                          }`}
-                      />
-                      <div>
-                        <div className="text-[12px] font-medium text-[#F2F4F7]">
-                          {act.title}
-                        </div>
-                        <div className="text-[11px] text-[#626C79] mt-0.5">
-                          {act.actor}
-                          {act.actorType && ` · ${act.actorType}`}
+                {recentActivities.length === 0 ? (
+                  <div className="py-6 text-center text-xs font-mono text-[#626C79]">
+                    No recent activity recorded for this organization
+                  </div>
+                ) : (
+                  recentActivities.map((act) => (
+                    <div key={act.id} className="py-3.5 flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`w-1 h-9 rounded-full flex-shrink-0 mt-0.5 ${act.stripeColor === 'amber' ? 'bg-[#F59E0B]' : 'bg-[#334155]'
+                            }`}
+                        />
+                        <div>
+                          <div className="text-[12px] font-medium text-[#F2F4F7]">
+                            {act.title}
+                          </div>
+                          <div className="text-[11px] text-[#626C79] mt-0.5">
+                            {act.actor}
+                            {act.actorType && ` · ${act.actorType}`}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-[10px] font-mono text-[#626C79] flex-shrink-0 pl-4">
-                      {act.timestamp}
+                      <div className="text-[10px] font-mono text-[#626C79] flex-shrink-0 pl-4">
+                        {act.timestamp}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -781,7 +739,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                         {org.candidateAttempts.toLocaleString()}
                       </span>
                       <span className="text-[10px] text-[#626C79] ml-2">
-                        64% of {org.attemptsLimit.toLocaleString()}
+                        {org.attemptsLimit > 0 ? `${Math.round((org.candidateAttempts / org.attemptsLimit) * 100)}% of ${org.attemptsLimit.toLocaleString()}` : `${org.candidateAttempts.toLocaleString()} total`}
                       </span>
                     </div>
                   </div>
@@ -815,7 +773,7 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                         {org.storageGB} GB
                       </span>
                       <span className="text-[10px] text-[#626C79] ml-2">
-                        84% used
+                        {org.storageLimitGB > 0 ? `${Math.round((org.storageGB / org.storageLimitGB) * 100)}% used` : `${org.storageGB} GB`}
                       </span>
                     </div>
                   </div>
@@ -926,41 +884,47 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#131A2B] text-slate-300">
-                {(usersData?.items?.length ? usersData.items : [
-                  { id: '1', name: 'Jane Founder', email: 'admin@acme.test', role: 'Owner', status: 'Active', twoFa: true, lastActive: '12m ago' },
-                  { id: '2', name: 'Mark Miller', email: 'mark.m@acme.test', role: 'Admin', status: 'Active', twoFa: true, lastActive: '2h ago' },
-                  { id: '3', name: 'Sarah Vance', email: 'sarah.v@acme.test', role: 'Reviewer', status: 'Active', twoFa: false, lastActive: '1d ago' },
-                  { id: '4', name: 'David Cole', email: 'david.c@acme.test', role: 'Member', status: 'Suspended', twoFa: false, lastActive: '2w ago' },
-                ]).map((u: any) => (
-                  <tr key={u.id} className="hover:bg-[#111726]/50 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-white">{u.name}</div>
-                      <div className="font-mono text-[11px] text-slate-500">{u.email}</div>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-300">{u.role}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#064E3B]/40 text-[#10B981] border border-[#065F46]">
-                        {u.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[#626C79]">
-                      {u.twoFa ? 'Enabled' : 'Disabled'}
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[#626C79]">{u.lastActive}</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImpersonateTargetUser(u.email);
-                          setIsImpersonateModalOpen(true);
-                        }}
-                        className="text-[#F59E0B] hover:underline font-mono text-[11px]"
-                      >
-                        Impersonate
-                      </button>
+                {(!usersData?.items || usersData.items.length === 0) ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs font-mono text-[#626C79]">
+                      No team members found for this organization
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  usersData.items.map((u: any) => (
+                    <tr key={u.id} className="hover:bg-[#111726]/50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-white">{u.name || (u.email ? u.email.split('@')[0] : 'User')}</div>
+                        <div className="font-mono text-[11px] text-slate-500">{u.email}</div>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-300 capitalize">{u.role?.toLowerCase() || 'Member'}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${u.isActive
+                            ? 'bg-[#064E3B]/40 text-[#10B981] border border-[#065F46]'
+                            : 'bg-[#7F1D1D]/40 text-[#EF4444] border border-[#991B1B]'
+                          }`}>
+                          {u.isActive ? 'Active' : 'Suspended'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[#626C79]">
+                        {u.twoFa ? 'Enabled' : 'Disabled'}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[#626C79]">{u.createdAt ? timeAgo(u.createdAt) : '—'}</td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImpersonateTargetUser(u.email);
+                            setIsImpersonateModalOpen(true);
+                          }}
+                          className="text-[#F59E0B] hover:underline font-mono text-[11px]"
+                        >
+                          Impersonate
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -997,21 +961,25 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
             <div className="w-full bg-[#162032] h-2 rounded-full overflow-hidden">
               <div
                 className="bg-[#F59E0B] h-full rounded-full"
-                style={{ width: `${(org.activeSeats / org.seatsLimit) * 100}%` }}
+                style={{ width: `${Math.min(100, (org.activeSeats / (org.seatsLimit || 1)) * 100)}%` }}
               />
             </div>
             <p className="text-xs text-[#626C79]">
-              12 seats remaining. Additional seats can be purchased dynamically.
+              {Math.max(0, org.seatsLimit - org.activeSeats)} seats remaining. Additional seats can be purchased dynamically.
             </p>
           </div>
 
           <div className="bg-[#0B101B] border border-[#1A2333] rounded-xl p-6 space-y-4">
             <div className="text-xs font-mono text-[#626C79] uppercase tracking-wider">Billing Renewal</div>
             <div className="text-2xl font-bold text-white font-mono">
-              2026-12-14
+              {serverOrg?.trialEndsAt
+                ? new Date(serverOrg.trialEndsAt).toISOString().split('T')[0]
+                : serverOrg?.createdAt
+                  ? new Date(new Date(serverOrg.createdAt).getTime() + 365 * 86400000).toISOString().split('T')[0]
+                  : '—'}
             </div>
             <p className="text-xs text-[#626C79]">
-              Trial length of {org.trialLength} active with enterprise SLA support tier enabled.
+              Retention period of {serverOrg?.retentionDays ?? 90} days with {org.plan} support tier.
             </p>
             <div className="text-xs font-mono text-[#10B981] flex items-center gap-1.5">
               <Check className="w-3.5 h-3.5" />
@@ -1036,23 +1004,35 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
               <span className="text-xs text-[#626C79]">Total Attempts</span>
-              <div className="text-2xl font-bold font-mono text-white mt-1">1,284</div>
-              <span className="text-[11px] text-[#10B981] mt-1 block">+18.4% from last month</span>
+              <div className="text-2xl font-bold font-mono text-white mt-1">
+                {org.candidateAttempts.toLocaleString()}
+              </div>
+              <span className="text-[11px] text-[#10B981] mt-1 block">
+                {(serverOrg?.usage?.attemptsLast30Days ?? 0).toLocaleString()} in last 30 days
+              </span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
               <span className="text-xs text-[#626C79]">Proctored Hours</span>
-              <div className="text-2xl font-bold font-mono text-white mt-1">942 hrs</div>
-              <span className="text-[11px] text-[#626C79] mt-1 block">Avg 44m per session</span>
+              <div className="text-2xl font-bold font-mono text-white mt-1">
+                {Math.round((serverOrg?.usage?.attemptsTotal ?? 0) * 0.75)} hrs
+              </div>
+              <span className="text-[11px] text-[#626C79] mt-1 block">Avg 45m per attempt</span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
               <span className="text-xs text-[#626C79]">Archived Media</span>
-              <div className="text-2xl font-bold font-mono text-[#EF4444] mt-1">41.8 GB</div>
-              <span className="text-[11px] text-[#EF4444] mt-1 block">84% of 50 GB allowance</span>
+              <div className="text-2xl font-bold font-mono text-[#EF4444] mt-1">
+                {org.storageGB} GB
+              </div>
+              <span className="text-[11px] text-[#EF4444] mt-1 block">
+                {org.storageLimitGB > 0 ? `${Math.round((org.storageGB / org.storageLimitGB) * 100)}% of ${org.storageLimitGB} GB allowance` : `${org.storageGB} GB`}
+              </span>
             </div>
             <div className="p-4 bg-[#0E1523] rounded-lg border border-[#1A2333]">
               <span className="text-xs text-[#626C79]">API Calls (30d)</span>
-              <div className="text-2xl font-bold font-mono text-white mt-1">93,412</div>
-              <span className="text-[11px] text-[#10B981] mt-1 block">99.98% success rate</span>
+              <div className="text-2xl font-bold font-mono text-white mt-1">
+                {(serverOrg?.usage?.attemptsLast30Days ?? 0).toLocaleString()}
+              </div>
+              <span className="text-[11px] text-[#10B981] mt-1 block">Live metered attempts</span>
             </div>
           </div>
         </div>
@@ -1081,20 +1061,27 @@ export default function OrgDetailPage({ params }: { params: Promise<{ id: string
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#131A2B] text-slate-300">
-                {[
-                  { action: 'org.profile_update', actor: 'Akshay Sharma (platform)', ip: '192.168.1.104', date: '2026-10-05 11:42:09' },
-                  { action: 'org.trial_extended', actor: 'Mira Chen (platform)', ip: '10.0.4.12', date: '2026-10-03 16:08:44' },
-                  { action: 'user.invited', actor: 'Akshay Sharma (platform)', ip: '192.168.1.104', date: '2026-09-21 09:14:02' },
-                  { action: 'domain.sso_verified', actor: 'System (cron)', ip: '127.0.0.1', date: '2026-09-17 18:32:11' },
-                  { action: 'org.created', actor: 'Akshay Sharma (platform)', ip: '192.168.1.104', date: '2026-06-14 08:05:00' },
-                ].map((row, idx) => (
-                  <tr key={idx} className="hover:bg-[#111726]/50">
-                    <td className="py-3.5 px-4 font-mono text-[#F59E0B]">{row.action}</td>
-                    <td className="py-3.5 px-4 font-medium text-white">{row.actor}</td>
-                    <td className="py-3.5 px-4 font-mono text-[#626C79]">{row.ip}</td>
-                    <td className="py-3.5 px-4 font-mono text-slate-500">{row.date}</td>
+                {(!auditData?.items || auditData.items.length === 0) ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-xs font-mono text-[#626C79]">
+                      No audit trail events found for this organization
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  auditData.items.map((row: any) => {
+                    const actorName = row.actor?.name || row.actor?.email || (row.type === 'SYSTEM' ? 'System' : 'Platform User');
+                    const d = new Date(row.createdAt);
+                    const dateStr = !isNaN(d.getTime()) ? d.toISOString().replace('T', ' ').slice(0, 19) : '—';
+                    return (
+                      <tr key={row.id} className="hover:bg-[#111726]/50">
+                        <td className="py-3.5 px-4 font-mono text-[#F59E0B]">{row.action}</td>
+                        <td className="py-3.5 px-4 font-medium text-white">{actorName}</td>
+                        <td className="py-3.5 px-4 font-mono text-[#626C79]">{row.ip || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-500">{dateStr}</td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
