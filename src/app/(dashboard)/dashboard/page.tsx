@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { MoreHorizontal, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, ArrowRight, Loader2 } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -63,8 +63,11 @@ export default function OverviewPage() {
   });
 
   const [activeMenuOrgId, setActiveMenuOrgId] = useState<string | null>(null);
+  const [busyAction, setBusyAction] = useState<{ orgId: string; action: 'suspend' | 'impersonate' } | null>(null);
 
   const handleToggleSuspend = async (org: RecentOrg) => {
+    if (busyAction) return;
+    setBusyAction({ orgId: org.id, action: 'suspend' });
     try {
       if (org.status === 'Suspended') {
         await api(`/orgs/${org.id}/unsuspend`, { method: 'POST' });
@@ -80,11 +83,14 @@ export default function OverviewPage() {
     } catch (err) {
       console.error('Failed to toggle suspension:', err);
     } finally {
+      setBusyAction(null);
       setActiveMenuOrgId(null);
     }
   };
 
   const handleImpersonate = async (orgId: string) => {
+    if (busyAction) return;
+    setBusyAction({ orgId, action: 'impersonate' });
     try {
       let targetUserId: string | undefined;
       try {
@@ -108,6 +114,7 @@ export default function OverviewPage() {
     } catch (err) {
       console.error('Failed to impersonate:', err);
     } finally {
+      setBusyAction(null);
       setActiveMenuOrgId(null);
     }
   };
@@ -400,6 +407,7 @@ export default function OverviewPage() {
                           onClick={() =>
                             setActiveMenuOrgId((prev) => (prev === org.id ? null : org.id))
                           }
+                          disabled={busyAction?.orgId === org.id}
                           className="p-1 rounded text-[#64748B] hover:text-white hover:bg-[#182133] transition-colors"
                         >
                           <MoreHorizontal className="w-4 h-4" />
@@ -416,16 +424,26 @@ export default function OverviewPage() {
                             <button
                               type="button"
                               onClick={() => handleImpersonate(org.id)}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[#CBD5E1] hover:bg-[#172033] hover:text-white rounded"
+                              disabled={!!busyAction}
+                              className="w-full text-left px-3 py-1.5 text-xs text-[#CBD5E1] hover:bg-[#172033] hover:text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Impersonate
+                              {busyAction?.orgId === org.id && busyAction.action === 'impersonate' && (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              )}
+                              {busyAction?.orgId === org.id && busyAction.action === 'impersonate' ? 'Impersonating…' : 'Impersonate'}
                             </button>
                             <button
                               type="button"
                               onClick={() => handleToggleSuspend(org)}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#172033] rounded"
+                              disabled={!!busyAction}
+                              className="w-full text-left px-3 py-1.5 text-xs text-[#EF4444] hover:bg-[#172033] rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {org.status === 'Suspended' ? 'Unsuspend' : 'Suspend'}
+                              {busyAction?.orgId === org.id && busyAction.action === 'suspend' && (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              )}
+                              {busyAction?.orgId === org.id && busyAction.action === 'suspend'
+                                ? (org.status === 'Suspended' ? 'Unsuspending…' : 'Suspending…')
+                                : (org.status === 'Suspended' ? 'Unsuspend' : 'Suspend')}
                             </button>
                           </div>
                         )}
