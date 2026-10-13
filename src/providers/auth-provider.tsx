@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { api, refreshAccessToken, setAccessToken } from '@/lib/api';
 import type { PlatformUser } from '@/lib/types';
+import { usePathname } from 'next/navigation';
 
 interface AuthCtx {
     user: PlatformUser | null;
@@ -16,8 +17,11 @@ export const useAuth = () => useContext(Ctx);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<PlatformUser | null>(null);
     const [loading, setLoading] = useState(true);
+    const pathname = usePathname();
 
     useEffect(() => {
+        const isPublic = ['/login', '/forgot-password', '/reset-password'].some((p) => pathname.startsWith(p));
+        if (isPublic) { setLoading(false); return; }
         (async () => {
             try {
                 if (await refreshAccessToken()) setUser(await api<PlatformUser>('/auth/me'));
